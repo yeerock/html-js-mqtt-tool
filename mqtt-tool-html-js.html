@@ -580,6 +580,7 @@ document.getElementById('connect_button').innerHTML = 'Connect';
       radioOptions[i].addEventListener('change', function () {
 
         if (this.value === 'test.mosquitto.org') {
+          document.getElementById('hostname_input').disabled = true;
           document.getElementById('hostname_input').value = 'test.mosquitto.org';
           document.getElementById('port1_input').hidden = false;
           document.getElementById('port1_text').hidden = false;
@@ -593,8 +594,8 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 port = document.getElementById('port1_input').value;
 
         } if (this.value === 'broker.emqx.io') {
+          document.getElementById('hostname_input').disabled = true;
           document.getElementById('hostname_input').value = 'broker.emqx.io';
-
           document.getElementById('port1_input').hidden = true;
           document.getElementById('port1_text').hidden = true;
         document.getElementById('port2_input').hidden = false;
@@ -607,6 +608,7 @@ port = document.getElementById('port1_input').value;
 port = document.getElementById('port2_input').value;
 
         } if (this.value === 'public.mqtthq.com') {
+          document.getElementById('hostname_input').disabled = true;
           document.getElementById('hostname_input').value = 'public.mqtthq.com';
           document.getElementById('port1_input').hidden = true;
           document.getElementById('port1_text').hidden = true;
