@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>HTML JS MQTT Tool</title>
+  <title>MQTT Tool in HTML + JS</title>
   <script src="mqttws31.js"></script>
 </head>
 <body>
-  <h1>HTML JS MQTT Tool</h1>
+  <h1>MQTT Tool in HTML + JS</h1>
   <p>Written by Alex Leong from <a href="https://www.vyrox.com">VYROX IoT</a></p>
   <label for="mqtt_broker" id="mqtt_broker_text">MQTT Broker (Server):</label>
   <input type="radio" name="mqtt_server" id="mosquitto_radio" value="test.mosquitto.org" checked>
@@ -362,16 +362,19 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 
 
 
-    function reconnect() {
+      function reconnect() {
       // Get input values
         hostname = document.getElementById('hostname_input').value;
-	port = document.getElementById('port1_input').value;
 	document.getElementById('port1_input').disabled = true;
 	document.getElementById('port2_input').disabled = true;
 	document.getElementById('port3_input').disabled = true;
 	document.getElementById('port9_input').disabled = true;
-        document.getElementById('ssl_input').disabled = true;
 	document.getElementById('connect_button').disabled = true;
+        document.getElementById('ssl_input').disabled = true;
+	document.getElementById('connect_button').innerHTML = 'Connecting';
+
+
+
       // Check if hostname is empty
       if (hostname === '') {
         document.getElementById('hostname_input').placeholder = 'Please enter hostname!';
@@ -393,34 +396,32 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 	document.getElementById('port2_input').disabled = true;
 	document.getElementById('port3_input').disabled = true;
 	document.getElementById('port9_input').disabled = true;
-        document.getElementById('ssl_input').disabled = true;
 	document.getElementById('connect_button').disabled = true;
 
 
+
+   
       var mosquittoRadio = document.getElementById("mosquitto_radio");
-      var emqx_radio = document.getElementById("emqx_radio");
-      var emqx_radio = document.getElementById("emqx_radio");
-      var mqtthq_radio = document.getElementById("mqtthq_radio");
+      var emqxRadio = document.getElementById("emqx_radio");
+      var otherRadio = document.getElementById("other_radio");
       var port1Input = document.getElementById("port1_input");
       var port2Input = document.getElementById("port2_input");
       var port3Input = document.getElementById("port3_input");
-      var port4Input = document.getElementById("port4_input");
       var port9Input = document.getElementById("port9_input");
-
  
 
       if (mosquittoRadio.checked) {
         port = port1Input.value;
       } 
 
- if (emqx.checked) {
+ if (emqxRadio.checked) {
         port = port2Input.value;
       } 
 
- if (other.checked) {
+ if (otherRadio.checked) {
         port = port9Input.value;
       } 
-
+    
 
       // Set up the client
       client = new Paho.MQTT.Client(hostname, Number(port), clientId);
@@ -431,17 +432,60 @@ document.getElementById('connect_button').innerHTML = 'Connect';
       client.onMessageArrived = onMessageArrived;
 
       // Set client options
+
+
+  
       var options = {
         onSuccess: connected, // After connected, subscribes
         onFailure: onFail,    // Useful for logging / debugging
-        //useSSL: True
+       	 useSSL: true
       };
+
+ var sslDropdown = document.getElementById("ssl_input");
+  options.useSSL = sslDropdown.value === "true";
 
       // Connect the client
       client.connect(options);
 
       // Show the clear button
       document.getElementById('clear_button').hidden = false;
+    }
+
+
+
+    function disconnect() {
+      if (client) {
+        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnecting from MQTT Server ' + hostname + ':' + port);
+        client.disconnect();
+        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnected!');
+
+        document.getElementById('mosquitto_radio').disabled = false;
+        document.getElementById('emqx_radio').disabled = false;
+        document.getElementById('other_radio').disabled = false;
+   document.getElementById('mqtthq_radio').disabled = false;
+
+        document.getElementById('connect_button').hidden = false;
+        document.getElementById('connect_button').disabled = false;
+	document.getElementById('connect_button').innerHTML = 'Connect';
+        document.getElementById('disconnect_button').hidden = true;
+        document.getElementById('topic_text').hidden = true;
+        document.getElementById('topic_input').hidden = true;
+        document.getElementById('subscribe_button').hidden = true;
+        document.getElementById('unsubscribe_button').hidden = true;
+        document.getElementById('message_text').hidden = true;
+        document.getElementById('message_input').hidden = true;
+        document.getElementById('qos_text').hidden = true;
+        document.getElementById('qos_input').hidden = true;
+        document.getElementById('retain_text').hidden = true;
+        document.getElementById('retain_input').hidden = true;
+        document.getElementById('send_button').hidden = true;
+        document.getElementById('port1_input').disabled = false;
+        document.getElementById('port2_input').disabled = false;
+        document.getElementById('port3_input').disabled = false;
+        document.getElementById('port9_input').disabled = false;
+        document.getElementById('ssl_input').disabled = false;
+
+      }
     }
 
 
