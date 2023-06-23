@@ -32,7 +32,7 @@ This tool requires the following dependency:
 
 ## Live Demo
 
-You can try out the live demo of this tool at [https://yeerock.000webhostapp.com/MQTT/html-js-mqtt-tool.html](https://yeerock.000webhostapp.com/MQTT/html-js-mqtt-tool.html).
+You can try out the live demo of this tool at [![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen)](https://yeerock.000webhostapp.com/MQTT/html-js-mqtt-tool.html))
 
 ## Credits
 
