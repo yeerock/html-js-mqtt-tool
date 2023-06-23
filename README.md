@@ -28,12 +28,12 @@ The tool provides several configuration options:
 
 This tool requires the following dependency:
 
-- [`mqttws31.js`](link-to-mqttws31.js): This JavaScript library provides the MQTT WebSocket implementation.
+- [`mqttws31.js`](https://www.cdnpkg.com/paho-mqtt/file/mqttws31.js/?id=59394): This JavaScript library provides the MQTT WebSocket implementation.
 
 ## Live Demo
 
-You can try out the live demo of this tool at [![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen)](https://yeerock.000webhostapp.com/MQTT/html-js-mqtt-tool.html))
+You can try out the live demo of this tool at [![Live Demo](https://img.shields.io/badge/Live%20Demo-Click%20Here-brightgreen)](https://yeerock.000webhostapp.com/MQTT/html-js-mqtt-tool.html)
 
 ## Credits
 
-This tool was written by Alex Leong from VYROX IoT. You can find more information about VYROX IoT at [https://www.vyrox.com](https://www.vyrox.com).
+This tool was written by Alex Leong from VYROX IoT. For any issues or further information, please contact Alex Leong through [his page](https://vyrox.com/about.php).
