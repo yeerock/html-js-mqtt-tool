@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HTML JS MQTT Tool</title>
+  <script src="mqttws31.js"></script>
+</head>
+<body>
+  <h1>HTML JS MQTT Tool</h1>
+  <p>Written by Alex Leong from <a href="https://www.vyrox.com">VYROX IoT</a></p>
+  <label for="mqtt_broker" id="mqtt_broker_text">MQTT Broker (Server):</label>
+  <input type="radio" name="mqtt_server" id="mosquitto_radio" value="test.mosquitto.org" checked>
+  <label for="mosquitto_radio">test.mosquitto.org</label>
+
+  <input type="radio" name="mqtt_server" id="emqx_radio" value="broker.emqx.io">
+  <label for="emqx_radio">broker.emqx.io</label>
+
+  <input type="radio" name="mqtt_server" id="mqtthq_radio" value="public.mqtthq.com">
+  <label for="mqtthq_radio">public.mqtthq.com</label>
+
+  <input type="radio" name="mqtt_server" id="other_radio" value="other_server">
+  <label for="other_radio">Other</label>
+
+  <br><br>
+
+  <label for="hostname_input">Hostname:</label>
+  <input type="text" id="hostname_input" value="test.mosquitto.org" disabled>
+
+  <label for="port1_input" id="port1_text" >Port:</label>
+ <select id="port1_input">
+    <option value="1883">1883 (unencrypted, unauthenticated)</option>
+    <option value="1884">1884 (unencrypted, unauthenticated)</option>
+    <option value="8883">8883 (encrypted, unauthenticated)</option>
+    <option value="8884">8884 (encrypted, client certificate required)</option>
+    <option value="8885">8885 (encrypted, authenticated)</option>
+    <option value="8886">8886 (encrypted, unauthenticated)</option>
+    <option value="8887">8887 (encrypted, server certificate deliberately expired)</option>
+    <option value="8080">8080 (WebSockets, unencrypted, unauthenticated)</option>
+    <option value="8081" selected>8081 (WebSockets, encrypted, unauthenticated)</option>
+    <option value="8090">8090 (WebSockets, unencrypted, authenticated)</option>
+    <option value="8091">8091 (WebSockets, encrypted, authenticated)</option>
+    </select>
+
+
+  <label for="port2_input" id="port2_text" hidden>Port:</label>
+ <select id="port2_input" hidden>
+    <option value="1883">1883 (TCP)</option>
+    <option value="8083" selected>8083 (WebSocket)</option>
+    <option value="8883">8883 (SSL/TLS)</option>
+    <option value="8084">8084 (WebSocket Secure)</option>
+    </select>
+
+
+  <label for="port3_input" id="port3_text" hidden>Port:</label>
+ <select id="port3_input" hidden>
+    <option value="1883">1883 (TCP)</option>
+    <option value="8083" selected>8083 (WebSocket)</option>
+    </select>
+
+
+  <label for="port9_input" id="port9_text" hidden>Port:</label>
+  <input type="text" id="port9_input" hidden>
+
+
+  <button id="connect_button" type="button" onclick="connect();">Connect</button>
+  <button id="disconnect_button" type="button" onclick="disconnect();" hidden>Disconnect</button>
+
+  <br>
+  <br>
+
+  <label for="topic_input" id="topic_text" hidden>Topic:</label>
+  <input type="text" id="topic_input" value="Q68381394f785b63ctr" hidden>
+  <button id="subscribe_button" type="button" onclick="subscribe();" hidden>Subscribe</button> 
+  <button id="unsubscribe_button" type="button" onclick="unsubscribe();" hidden>Unsubscribe</button> 
+
+  <br>
+  <br>
+
+  <label for="message_input" id="message_text" hidden>Message:</label>
+  <input type="text" id="message_input" hidden>
+
+  <label for="qos_input" id="qos_text" hidden>QoS: </label>
+ <select id="qos_input" hidden>
+    <option value="0">0 (At most once)</option>
+    <option value="1">1 (At least once)</option>
+    <option value="2" selected>2 (Exactly once)</option>
+    </select>
+
+  <label for="retain_input" id="retain_text" hidden>Retain: </label>
+ <select id="retain_input" hidden>
+    <option value="True">Yes</option>
+    <option value="False">No</option>
+
+    </select>
+
+
+  <button id="send_button" type="button" onclick="send();" hidden>Send</button> 
+
+  <br>
+  <br>
+
+  <button id="clear_button" type="button" onclick="clearConsole();" hidden>Clear Screen</button>
+
+  <br>
+  <br>
+
+  <div id="console"></div> <!-- Display console messages here -->
+
+  <script>
+    // Global variables
+    var client;
+
+    // These are configs	
+    var hostname;
+    var port;
+    var topic;
+    var clientId;
+
+    // Create client ID or load from storage
+    if (window.sessionStorage.clientId) {
+      clientId = window.sessionStorage.clientId;
+    } else {
+      clientId = "" + parseInt(Math.random() * 100000, 10);
+      window.sessionStorage.clientId = clientId;
+    }
+
+
+
+    function connect() {
+      // Get input values
+        hostname = document.getElementById('hostname_input').value;
+	document.getElementById('port1_input').disabled = true;
+	document.getElementById('port2_input').disabled = true;
+	document.getElementById('port3_input').disabled = true;
+	document.getElementById('port9_input').disabled = true;
+	document.getElementById('connect_button').disabled = true;
+	document.getElementById('connect_button').innerHTML = 'Connecting';
+
+
+
+      // Check if hostname is empty
+      if (hostname === '') {
+        document.getElementById('hostname_input').placeholder = 'Please enter hostname!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+      // Check if port is empty
+      if (port === '') {
+        document.getElementById('port9_input').placeholder = 'Please enter port!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+	document.getElementById('hostname_input').disabled = true;
+	document.getElementById('port1_input').disabled = true;
+	document.getElementById('port2_input').disabled = true;
+	document.getElementById('port3_input').disabled = true;
+	document.getElementById('port9_input').disabled = true;
+	document.getElementById('connect_button').disabled = true;
+
+
+
+   
+      var mosquittoRadio = document.getElementById("mosquitto_radio");
+      var emqxRadio = document.getElementById("emqx_radio");
+      var otherRadio = document.getElementById("other_radio");
+      var port1Input = document.getElementById("port1_input");
+      var port2Input = document.getElementById("port2_input");
+      var port3Input = document.getElementById("port3_input");
+      var port9Input = document.getElementById("port9_input");
+ 
+
+      if (mosquittoRadio.checked) {
+        port = port1Input.value;
+      } 
+
+ if (emqxRadio.checked) {
+        port = port2Input.value;
+      } 
+
+ if (otherRadio.checked) {
+        port = port9Input.value;
+      } 
+    
+
+      // Set up the client
+      client = new Paho.MQTT.Client(hostname, Number(port), clientId);
+      logConsole('[' + getFormattedTimestamp() + '] Connecting to MQTT SERVER ' + hostname + ':' + port + '...');
+
+      // Set callback handlers
+      client.onConnectionLost = onConnectionLost;
+      client.onMessageArrived = onMessageArrived;
+
+      // Set client options
+      var options = {
+        onSuccess: connected, // After connected, subscribes
+        onFailure: onFail,    // Useful for logging / debugging
+        useSSL: false
+      };
+
+      // Connect the client
+      client.connect(options);
+
+      // Show the clear button
+      document.getElementById('clear_button').hidden = false;
+    }
+
+
+
+    function disconnect() {
+      if (client) {
+        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnecting from MQTT Server ' + hostname + ':' + port);
+        client.disconnect();
+        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnected!');
+
+        document.getElementById('mosquitto_radio').disabled = false;
+        document.getElementById('emqx_radio').disabled = false;
+        document.getElementById('other_radio').disabled = false;
+
+        document.getElementById('connect_button').hidden = false;
+        document.getElementById('connect_button').disabled = false;
+	document.getElementById('connect_button').innerHTML = 'Connect';
+        document.getElementById('disconnect_button').hidden = true;
+        document.getElementById('topic_text').hidden = true;
+        document.getElementById('topic_input').hidden = true;
+        document.getElementById('subscribe_button').hidden = true;
+        document.getElementById('unsubscribe_button').hidden = true;
+        document.getElementById('message_text').hidden = true;
+        document.getElementById('message_input').hidden = true;
+        document.getElementById('qos_text').hidden = true;
+        document.getElementById('qos_input').hidden = true;
+        document.getElementById('retain_text').hidden = true;
+        document.getElementById('retain_input').hidden = true;
+        document.getElementById('send_button').hidden = true;
+        document.getElementById('port1_input').disabled = false;
+        document.getElementById('port2_input').disabled = false;
+        document.getElementById('port3_input').disabled = false;
+        document.getElementById('port9_input').disabled = false;
+
+      }
+    }
+
+
+
+
+
+
+    function connected(context) {
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Connected! Client ID: ' + clientId);
+
+      document.getElementById('mosquitto_radio').disabled = true;
+      document.getElementById('emqx_radio').disabled = true;
+      document.getElementById('mqtthq_radio').disabled = true;
+      document.getElementById('other_radio').disabled = true;
+
+
+      document.getElementById('clear_button').disabled = false;
+
+      document.getElementById('hostname_input').disabled = true;
+      document.getElementById('port1_input').disabled = true;
+      document.getElementById('port2_input').disabled = true;
+      document.getElementById('port3_input').disabled = true;
+      document.getElementById('port9_input').disabled = true;
+	
+      document.getElementById('connect_button').hidden = true;
+	document.getElementById('connect_button').innerHTML = 'Connect';
+      document.getElementById('disconnect_button').hidden = false;
+
+      document.getElementById('topic_text').hidden = false;
+      document.getElementById('topic_input').hidden = false;
+      document.getElementById('subscribe_button').hidden = false;
+    }
+
+
+
+    function subscribe(context) {
+      topic = document.getElementById('topic_input').value;
+      document.getElementById('send_button').hidden = false;
+      document.getElementById('subscribe_button').hidden = true;
+      document.getElementById('unsubscribe_button').hidden = false;
+      document.getElementById('topic_text').hidden = false;
+      document.getElementById('topic_input').hidden = false;
+
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribing to Topic: ' + topic + '...');
+
+      // And subscribe to our topics -- all with the same callback function
+      options = { qos: 0, onSuccess: function (context) { logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribed!'); } }
+      client.subscribe(topic, options);
+
+      document.getElementById('topic_text').disabled = true;
+      document.getElementById('topic_input').disabled = true;
+      document.getElementById('message_text').hidden = false;
+      document.getElementById('message_input').hidden = false;
+      document.getElementById('qos_text').hidden = false;
+      document.getElementById('qos_input').hidden = false;
+      document.getElementById('retain_text').hidden = false;
+      document.getElementById('retain_input').hidden = false;
+      document.getElementById('send_button').hidden = false;
+    }
+
+
+
+    function unsubscribe(context) {
+      topic = document.getElementById('topic_input').value;
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Unsubscribing from Topic: ' + topic + '...');
+
+      document.getElementById('subscribe_button').hidden = false;
+      document.getElementById('unsubscribe_button').hidden = true;
+      document.getElementById('topic_input').disabled = false;
+      document.getElementById('message_text').hidden = true;
+      document.getElementById('message_input').hidden = true;
+      document.getElementById('qos_text').hidden = true;
+      document.getElementById('qos_input').hidden = true;
+    document.getElementById('retain_text').hidden = true;
+      document.getElementById('retain_input').hidden = true;
+      document.getElementById('send_button').hidden = true;
+
+      client.unsubscribe(topic);
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Unsubscribed!');
+    }
+
+
+
+
+    function onFail(context) {
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to connect');
+	document.getElementById('hostname_input').disabled = false;
+      document.getElementById('port1_input').disabled = false;
+      document.getElementById('port2_input').disabled = false;
+      document.getElementById('port3_input').disabled = false;
+      document.getElementById('port9_input').disabled = false;
+document.getElementById('connect_button').disabled = false;
+document.getElementById('connect_button').innerHTML = 'Connect';
+
+    }
+
+
+
+    function reconnect() {
+      // Get input values
+        hostname = document.getElementById('hostname_input').value;
+	port = document.getElementById('port1_input').value;
+	document.getElementById('port1_input').disabled = true;
+	document.getElementById('port2_input').disabled = true;
+	document.getElementById('port3_input').disabled = true;
+	document.getElementById('port9_input').disabled = true;
+	document.getElementById('connect_button').disabled = true;
+      // Check if hostname is empty
+      if (hostname === '') {
+        document.getElementById('hostname_input').placeholder = 'Please enter hostname!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+      // Check if port is empty
+      if (port === '') {
+        document.getElementById('port9_input').placeholder = 'Please enter port!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+	document.getElementById('hostname_input').disabled = true;
+	document.getElementById('port1_input').disabled = true;
+	document.getElementById('port2_input').disabled = true;
+	document.getElementById('port3_input').disabled = true;
+	document.getElementById('port9_input').disabled = true;
+	document.getElementById('connect_button').disabled = true;
+
+
+      var mosquittoRadio = document.getElementById("mosquitto_radio");
+      var emqx_radio = document.getElementById("emqx_radio");
+      var emqx_radio = document.getElementById("emqx_radio");
+      var mqtthq_radio = document.getElementById("mqtthq_radio");
+      var port1Input = document.getElementById("port1_input");
+      var port2Input = document.getElementById("port2_input");
+      var port3Input = document.getElementById("port3_input");
+      var port4Input = document.getElementById("port4_input");
+      var port9Input = document.getElementById("port9_input");
+ 
+
+      if (mosquittoRadio.checked) {
+        port = port1Input.value;
+      } 
+
+ if (emqx.checked) {
+        port = port2Input.value;
+      } 
+
+ if (other.checked) {
+        port = port9Input.value;
+      } 
+
+
+      // Set up the client
+      client = new Paho.MQTT.Client(hostname, Number(port), clientId);
+      logConsole('[' + getFormattedTimestamp() + '] Reconnecting to MQTT SERVER ' + hostname + ':' + port + '...');
+
+      // Set callback handlers
+      client.onConnectionLost = onConnectionLost;
+      client.onMessageArrived = onMessageArrived;
+
+      // Set client options
+      var options = {
+        onSuccess: connected, // After connected, subscribes
+        onFailure: onFail,    // Useful for logging / debugging
+        useSSL: True
+      };
+
+      // Connect the client
+      client.connect(options);
+
+      // Show the clear button
+      document.getElementById('clear_button').hidden = false;
+    }
+
+
+
+
+    function onConnectionLost(responseObject) {
+      if (responseObject.errorCode !== 0) {
+        logConsole("Connection Lost: " + responseObject.errorMessage);
+        //window.alert("Someone else took my websocket!\nRefresh to take it back.");
+	reconnect();
+
+      }
+    }
+
+
+
+    function onMessageArrived(message) {
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving from Topic: ' + message.destinationName + ', Message: ' + message.payloadString);
+      if (message.destinationName == topic) {
+
+      }
+    }
+
+    function send() {
+      var messagecontent = document.getElementById('message_input').value;
+
+  if (messagecontent === '') {
+        document.getElementById('message_input').placeholder = 'Please enter message!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+      var payload = messagecontent;
+
+      // Send message
+    
+      message = new Paho.MQTT.Message(payload);
+      message.destinationName = topic;
+       var qosDropdown = document.getElementById("qos_input");
+       var selectedQoS = parseInt(qosDropdown.value);
+      message.qos = selectedQoS;
+
+  var retainDropdown = document.getElementById("retain_input");
+  var selectedRetain = (retainDropdown.value === "True");
+  message.retained = selectedRetain;
+  
+      client.send(message);
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Sending to: ' + message.destinationName + ', Message: ' + payload);
+    }
+
+    function logConsole(message) {
+      var consoleElement = document.getElementById('console');
+      consoleElement.innerHTML += message + '<br>';
+      if (consoleElement.innerHTML !== "") {
+        document.getElementById('clear_button').disabled = false;
+      }
+    }
+
+    function clearConsole() {
+      var consoleElement = document.getElementById('console');
+      consoleElement.innerHTML = "";
+      document.getElementById('clear_button').disabled = true;
+    }
+
+    function getFormattedTimestamp() {
+      var now = new Date();
+      var day = now.getDate();
+      var month = now.getMonth() + 1;
+      var year = now.getFullYear();
+      var hour = now.getHours();
+      var minute = now.getMinutes();
+      var second = now.getSeconds();
+      var period = hour >= 12 ? 'PM' : 'AM';
+
+      // Format single-digit day and month
+      day = day < 10 ? '0' + day : day;
+      month = month < 10 ? '0' + month : month;
+
+      // Format hour and minute
+      hour = hour % 12;
+      hour = hour ? hour : 12; // Display 12 instead of 0
+      minute = minute < 10 ? '0' + minute : minute;
+
+      var formattedTimestamp = day + '/' + month + '/' + year + ' ' + hour + ':' + minute + ':' + second + ' ' + period;
+      return formattedTimestamp;
+    }
+
+    // Update hostname and port based on selected radio option
+    var radioOptions = document.getElementsByName('mqtt_server');
+    for (var i = 0; i < radioOptions.length; i++) {
+      radioOptions[i].addEventListener('change', function () {
+
+        if (this.value === 'test.mosquitto.org') {
+          document.getElementById('hostname_input').value = 'test.mosquitto.org';
+          document.getElementById('port1_input').hidden = false;
+          document.getElementById('port1_text').hidden = false;
+        document.getElementById('port2_input').hidden = true;
+          document.getElementById('port2_text').hidden = true;
+       document.getElementById('port3_input').hidden = true;
+          document.getElementById('port3_text').hidden = true;
+   	document.getElementById('port9_text').hidden = true;
+        document.getElementById('port9_input').hidden = true;
+port = document.getElementById('port1_input').value;
+
+        } if (this.value === 'broker.emqx.io') {
+          document.getElementById('hostname_input').value = 'broker.emqx.io';
+
+          document.getElementById('port1_input').hidden = true;
+          document.getElementById('port1_text').hidden = true;
+        document.getElementById('port2_input').hidden = false;
+          document.getElementById('port2_text').hidden = false;
+     document.getElementById('port3_input').hidden = true;
+          document.getElementById('port3_text').hidden = true;
+   document.getElementById('port9_text').hidden = true;
+        document.getElementById('port9_input').hidden = true;
+port = document.getElementById('port2_input').value;
+
+        } if (this.value === 'public.mqtthq.com') {
+          document.getElementById('hostname_input').value = 'public.mqtthq.com';
+          document.getElementById('port1_input').hidden = true;
+          document.getElementById('port1_text').hidden = true;
+        document.getElementById('port2_input').hidden = true;
+          document.getElementById('port2_text').hidden = true;
+     document.getElementById('port3_input').hidden = false;
+          document.getElementById('port3_text').hidden = false;
+   document.getElementById('port9_text').hidden = true;
+        document.getElementById('port9_input').hidden = true;
+port = document.getElementById('port3_input').value;
+
+        } if (this.value === 'other_server') {
+          document.getElementById('hostname_input').disabled = false;
+          document.getElementById('hostname_input').value = '52.13.116.147';
+        document.getElementById('port1_input').hidden = true;
+          document.getElementById('port1_text').hidden = true;
+        document.getElementById('port2_input').hidden = true;
+          document.getElementById('port2_text').hidden = true;
+
+        document.getElementById('port3_input').hidden = true;
+          document.getElementById('port3_text').hidden = true;
+
+          document.getElementById('port9_text').hidden = false;
+        document.getElementById('port9_input').hidden = false;
+          document.getElementById('port9_input').value = '8083';
+port = document.getElementById('port9_input').value;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
