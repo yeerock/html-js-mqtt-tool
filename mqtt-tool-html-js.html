@@ -60,13 +60,27 @@
   <label for="port9_input" id="port9_text" hidden>Port:</label>
   <input type="text" id="port9_input" hidden>
 
+<br><br>
+
 <label for="ssl_input" id="ssl_text">Use SSL:</label>
 <select id="ssl_input" onchange="onSSLChange()">
   <option value="true">Yes</option>
   <option value="false">No</option>
 </select>
 
+<label for="auth_input" id="auth_text">Required Login </label>
+<select id="auth_input" onchange="onAUTHChange()">
+  <option value="true">Yes</option>
+  <option value="false" selected>No</option>
+</select>
 
+  <label for="username_input" id="username_text" hidden>Username:</label>
+  <input type="text" id="username_input" hidden>
+
+  <label for="password_input" id="password_text" hidden>Password:</label>
+  <input type="text" id="password_input" hidden>
+
+<br><br>
   <button id="connect_button" type="button" onclick="connect();">Connect</button>
   <button id="disconnect_button" type="button" onclick="disconnect();" hidden>Disconnect</button>
 
@@ -93,7 +107,7 @@
 
   <label for="retain_input" id="retain_text" hidden>Retain: </label>
  <select id="retain_input" hidden>
-    <option value="true">Yes</option>
+    <option value="true" selected>Yes</option>
     <option value="false">No</option>
 
     </select>
@@ -114,12 +128,14 @@
   <script>
     // Global variables
     var client;
+var options = {};
 
     // These are configs	
     var hostname;
     var port;
     var topic;
     var clientId;
+    var ip;
 
     // Create client ID or load from storage
     if (window.sessionStorage.clientId) {
@@ -133,11 +149,41 @@
 
 function onSSLChange() {
   var useSSLDropdown = document.getElementById("ssl_input");
-  options.useSSL = useSSLDropdown.value === "true";
+  options.useSSL = useSSLDropdown.value;
+}
+
+function onAUTHChange() {
+  var useAUTHDropdown = document.getElementById("auth_input");
+
+if (useAUTHDropdown.value === "true")
+{
+document.getElementById('username_text').hidden = false;
+document.getElementById('username_input').hidden = false;
+document.getElementById('password_text').hidden = false;
+document.getElementById('password_input').hidden = false; }
+
+if (useAUTHDropdown.value === "false")
+{
+document.getElementById('username_text').hidden = true;
+document.getElementById('username_input').hidden = true;
+document.getElementById('password_text').hidden = true;
+document.getElementById('password_input').hidden = true; }
+
+  options.useAUTH = useAUTHDropdown.value;
+
+
 }
 
 
+
   async function connect() {
+
+clearConsole();
+
+  document.getElementById('mosquitto_radio').disabled = true;
+      document.getElementById('emqx_radio').disabled = true;
+      document.getElementById('mqtthq_radio').disabled = true;
+      document.getElementById('other_radio').disabled = true;
 
 
       // Get input values
@@ -148,7 +194,7 @@ function onSSLChange() {
 	document.getElementById('port9_input').disabled = true;
 	document.getElementById('connect_button').disabled = true;
         document.getElementById('ssl_input').disabled = true;
-	document.getElementById('connect_button').innerHTML = 'Connecting';
+
 
 
 
@@ -185,6 +231,11 @@ function onSSLChange() {
       var port2Input = document.getElementById("port2_input");
       var port3Input = document.getElementById("port3_input");
       var port9Input = document.getElementById("port9_input");
+    document.getElementById('auth_input').disabled = true;
+    document.getElementById('username_input').disabled = true;
+    document.getElementById('password_input').disabled = true;
+
+	document.getElementById('connect_button').innerHTML = 'Connecting';
  
 
       if (mosquittoRadio.checked) {
@@ -200,13 +251,12 @@ function onSSLChange() {
       } 
     
 
-  var ip = await resolveDomain();
+  ip = await resolveDomain();
 
 
 
       // Set up the client
       client = new Paho.MQTT.Client(hostname, Number(port), clientId);
-//      logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + hostname + ':' + port + '...');
       logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + '...');
 
       // Set callback handlers
@@ -217,30 +267,42 @@ function onSSLChange() {
 
 
   
-      var options = {
+      options = {
         onSuccess: connected, // After connected, subscribes
         onFailure: onFail,    // Useful for logging / debugging
-       	 useSSL: true
+       useSSL: true
+
       };
 
  var sslDropdown = document.getElementById("ssl_input");
   options.useSSL = sslDropdown.value === "true";
+
+ var authUsername = document.getElementById("username_input");
+  options.userName = authUsername.value;
+
+ var authpassword = document.getElementById("password_input");
+  options.password = authpassword.value;
 
       // Connect the client
       client.connect(options);
 
       // Show the clear button
       document.getElementById('clear_button').hidden = false;
+
     }
 
 
 
 
 
-
-
-
   async function reconnect() {
+
+clearConsole();
+
+  document.getElementById('mosquitto_radio').disabled = true;
+      document.getElementById('emqx_radio').disabled = true;
+      document.getElementById('mqtthq_radio').disabled = true;
+      document.getElementById('other_radio').disabled = true;
 
 
       // Get input values
@@ -251,7 +313,7 @@ function onSSLChange() {
 	document.getElementById('port9_input').disabled = true;
 	document.getElementById('connect_button').disabled = true;
         document.getElementById('ssl_input').disabled = true;
-	document.getElementById('connect_button').innerHTML = 'Connecting';
+
 
 
 
@@ -278,8 +340,6 @@ function onSSLChange() {
 	document.getElementById('port9_input').disabled = true;
 	document.getElementById('connect_button').disabled = true;
 
-
-
    
       var mosquittoRadio = document.getElementById("mosquitto_radio");
       var emqxRadio = document.getElementById("emqx_radio");
@@ -288,6 +348,11 @@ function onSSLChange() {
       var port2Input = document.getElementById("port2_input");
       var port3Input = document.getElementById("port3_input");
       var port9Input = document.getElementById("port9_input");
+    document.getElementById('auth_input').disabled = true;
+    document.getElementById('username_input').disabled = true;
+    document.getElementById('password_input').disabled = true;
+
+	document.getElementById('connect_button').innerHTML = 'Connecting';
  
 
       if (mosquittoRadio.checked) {
@@ -303,7 +368,7 @@ function onSSLChange() {
       } 
     
 
-  var ip = await resolveDomain();
+  ip = await resolveDomain();
 
 
 
@@ -320,7 +385,7 @@ function onSSLChange() {
 
 
   
-      var options = {
+      options = {
         onSuccess: connected, // After connected, subscribes
         onFailure: onFail,    // Useful for logging / debugging
        	 useSSL: true
@@ -342,17 +407,23 @@ function onSSLChange() {
 
 
 
-    function disconnect() {
+  async function disconnect() {
+
+
       if (client) {
-        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnecting from MQTT Server ' + hostname + ':' + port);
+        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnecting from ' + ip + ':' + port);
         client.disconnect();
         logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnected!');
+
+  document.getElementById('mosquitto_radio').disabled = false;
+      document.getElementById('emqx_radio').disabled = false;
+      document.getElementById('mqtthq_radio').disabled = false;
+      document.getElementById('other_radio').disabled = false;
 
         document.getElementById('mosquitto_radio').disabled = false;
         document.getElementById('emqx_radio').disabled = false;
         document.getElementById('other_radio').disabled = false;
    document.getElementById('mqtthq_radio').disabled = false;
-
         document.getElementById('connect_button').hidden = false;
         document.getElementById('connect_button').disabled = false;
 	document.getElementById('connect_button').innerHTML = 'Connect';
@@ -373,6 +444,9 @@ function onSSLChange() {
         document.getElementById('port3_input').disabled = false;
         document.getElementById('port9_input').disabled = false;
         document.getElementById('ssl_input').disabled = false;
+  	  document.getElementById('username_input').disabled = false;
+   	 document.getElementById('password_input').disabled = false;
+  	  document.getElementById('auth_input').disabled = false;
 
       }
     }
@@ -462,57 +536,21 @@ function onSSLChange() {
 
 
     function onFail(context) {
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to connect');
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to connect' + responseObject.errorMessage);
+   document.getElementById('mosquitto_radio').disabled = false;
+      document.getElementById('emqx_radio').disabled = false;
+      document.getElementById('mqtthq_radio').disabled = false;
+      document.getElementById('other_radio').disabled = false;
 	document.getElementById('hostname_input').disabled = false;
       document.getElementById('port1_input').disabled = false;
       document.getElementById('port2_input').disabled = false;
       document.getElementById('port3_input').disabled = false;
       document.getElementById('port9_input').disabled = false;
         document.getElementById('ssl_input').disabled = false;
+        document.getElementById('auth_input').disabled = false;
 document.getElementById('connect_button').disabled = false;
 document.getElementById('connect_button').innerHTML = 'Connect';
 
-    }
-
-
-
-    
-
-
-
-    function disconnect() {
-      if (client) {
-        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnecting from MQTT Server ' + hostname + ':' + port);
-        client.disconnect();
-        logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnected!');
-
-        document.getElementById('mosquitto_radio').disabled = false;
-        document.getElementById('emqx_radio').disabled = false;
-        document.getElementById('other_radio').disabled = false;
-   document.getElementById('mqtthq_radio').disabled = false;
-
-        document.getElementById('connect_button').hidden = false;
-        document.getElementById('connect_button').disabled = false;
-	document.getElementById('connect_button').innerHTML = 'Connect';
-        document.getElementById('disconnect_button').hidden = true;
-        document.getElementById('topic_text').hidden = true;
-        document.getElementById('topic_input').hidden = true;
-        document.getElementById('subscribe_button').hidden = true;
-        document.getElementById('unsubscribe_button').hidden = true;
-        document.getElementById('message_text').hidden = true;
-        document.getElementById('message_input').hidden = true;
-        document.getElementById('qos_text').hidden = true;
-        document.getElementById('qos_input').hidden = true;
-        document.getElementById('retain_text').hidden = true;
-        document.getElementById('retain_input').hidden = true;
-        document.getElementById('send_button').hidden = true;
-        document.getElementById('port1_input').disabled = false;
-        document.getElementById('port2_input').disabled = false;
-        document.getElementById('port3_input').disabled = false;
-        document.getElementById('port9_input').disabled = false;
-        document.getElementById('ssl_input').disabled = false;
-
-      }
     }
 
 
@@ -530,6 +568,7 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 
 
     function onMessageArrived(message) {
+// chrome.runtime.sendMessage(message);
       logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving Message: ' + message.payloadString);
       if (message.destinationName == topic) {
 
@@ -687,7 +726,7 @@ async function resolveDomain() {
     if (response.ok) {
       var data = await response.json();
       ip = data.Answer[0].data;
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Resolved!');
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Resolved! IP: ' + ip);
     } else {
       logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to resolve IP address for ' + domain);
     }
