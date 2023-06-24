@@ -137,8 +137,9 @@ function onSSLChange() {
 }
 
 
+  async function connect() {
 
-    function connect() {
+
       // Get input values
         hostname = document.getElementById('hostname_input').value;
 	document.getElementById('port1_input').disabled = true;
@@ -199,9 +200,14 @@ function onSSLChange() {
       } 
     
 
+  var ip = await resolveDomain();
+
+
+
       // Set up the client
       client = new Paho.MQTT.Client(hostname, Number(port), clientId);
-      logConsole('[' + getFormattedTimestamp() + '] Connecting to MQTT SERVER ' + hostname + ':' + port + '...');
+//      logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + hostname + ':' + port + '...');
+      logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + '...');
 
       // Set callback handlers
       client.onConnectionLost = onConnectionLost;
@@ -226,6 +232,113 @@ function onSSLChange() {
       // Show the clear button
       document.getElementById('clear_button').hidden = false;
     }
+
+
+
+
+
+
+
+
+  async function reconnect() {
+
+
+      // Get input values
+        hostname = document.getElementById('hostname_input').value;
+	document.getElementById('port1_input').disabled = true;
+	document.getElementById('port2_input').disabled = true;
+	document.getElementById('port3_input').disabled = true;
+	document.getElementById('port9_input').disabled = true;
+	document.getElementById('connect_button').disabled = true;
+        document.getElementById('ssl_input').disabled = true;
+	document.getElementById('connect_button').innerHTML = 'Connecting';
+
+
+
+      // Check if hostname is empty
+      if (hostname === '') {
+        document.getElementById('hostname_input').placeholder = 'Please enter hostname!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+      // Check if port is empty
+      if (port === '') {
+        document.getElementById('port9_input').placeholder = 'Please enter port!';
+	document.getElementById('port9_input').disabled = false;
+	document.getElementById('connect_button').disabled = false;
+        return; // Stop further execution
+      }
+
+	document.getElementById('hostname_input').disabled = true;
+	document.getElementById('port1_input').disabled = true;
+	document.getElementById('port2_input').disabled = true;
+	document.getElementById('port3_input').disabled = true;
+	document.getElementById('port9_input').disabled = true;
+	document.getElementById('connect_button').disabled = true;
+
+
+
+   
+      var mosquittoRadio = document.getElementById("mosquitto_radio");
+      var emqxRadio = document.getElementById("emqx_radio");
+      var otherRadio = document.getElementById("other_radio");
+      var port1Input = document.getElementById("port1_input");
+      var port2Input = document.getElementById("port2_input");
+      var port3Input = document.getElementById("port3_input");
+      var port9Input = document.getElementById("port9_input");
+ 
+
+      if (mosquittoRadio.checked) {
+        port = port1Input.value;
+      } 
+
+ if (emqxRadio.checked) {
+        port = port2Input.value;
+      } 
+
+ if (otherRadio.checked) {
+        port = port9Input.value;
+      } 
+    
+
+  var ip = await resolveDomain();
+
+
+
+      // Set up the client
+      client = new Paho.MQTT.Client(hostname, Number(port), clientId);
+//      logConsole('[' + getFormattedTimestamp() + '] Reconnecting to ' + hostname + ':' + port + '...');
+      logConsole('[' + getFormattedTimestamp() + '] Reconnecting to ' + ip + ':' + port + '...');
+
+      // Set callback handlers
+      client.onConnectionLost = onConnectionLost;
+      client.onMessageArrived = onMessageArrived;
+
+      // Set client options
+
+
+  
+      var options = {
+        onSuccess: connected, // After connected, subscribes
+        onFailure: onFail,    // Useful for logging / debugging
+       	 useSSL: true
+      };
+
+ var sslDropdown = document.getElementById("ssl_input");
+  options.useSSL = sslDropdown.value === "true";
+
+      // Connect the client
+      client.connect(options);
+
+      // Show the clear button
+      document.getElementById('clear_button').hidden = false;
+    }
+
+
+
+
 
 
 
@@ -293,6 +406,7 @@ function onSSLChange() {
 
       document.getElementById('topic_text').hidden = false;
       document.getElementById('topic_input').hidden = false;
+      document.getElementById('topic_input').disabled = false;
       document.getElementById('subscribe_button').hidden = false;
     }
 
@@ -362,94 +476,7 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 
 
 
-      function reconnect() {
-      // Get input values
-        hostname = document.getElementById('hostname_input').value;
-	document.getElementById('port1_input').disabled = true;
-	document.getElementById('port2_input').disabled = true;
-	document.getElementById('port3_input').disabled = true;
-	document.getElementById('port9_input').disabled = true;
-	document.getElementById('connect_button').disabled = true;
-        document.getElementById('ssl_input').disabled = true;
-	document.getElementById('connect_button').innerHTML = 'Connecting';
-
-
-
-      // Check if hostname is empty
-      if (hostname === '') {
-        document.getElementById('hostname_input').placeholder = 'Please enter hostname!';
-	document.getElementById('port9_input').disabled = false;
-	document.getElementById('connect_button').disabled = false;
-        return; // Stop further execution
-      }
-
-      // Check if port is empty
-      if (port === '') {
-        document.getElementById('port9_input').placeholder = 'Please enter port!';
-	document.getElementById('port9_input').disabled = false;
-	document.getElementById('connect_button').disabled = false;
-        return; // Stop further execution
-      }
-
-	document.getElementById('hostname_input').disabled = true;
-	document.getElementById('port1_input').disabled = true;
-	document.getElementById('port2_input').disabled = true;
-	document.getElementById('port3_input').disabled = true;
-	document.getElementById('port9_input').disabled = true;
-	document.getElementById('connect_button').disabled = true;
-
-
-
-   
-      var mosquittoRadio = document.getElementById("mosquitto_radio");
-      var emqxRadio = document.getElementById("emqx_radio");
-      var otherRadio = document.getElementById("other_radio");
-      var port1Input = document.getElementById("port1_input");
-      var port2Input = document.getElementById("port2_input");
-      var port3Input = document.getElementById("port3_input");
-      var port9Input = document.getElementById("port9_input");
- 
-
-      if (mosquittoRadio.checked) {
-        port = port1Input.value;
-      } 
-
- if (emqxRadio.checked) {
-        port = port2Input.value;
-      } 
-
- if (otherRadio.checked) {
-        port = port9Input.value;
-      } 
     
-
-      // Set up the client
-      client = new Paho.MQTT.Client(hostname, Number(port), clientId);
-      logConsole('[' + getFormattedTimestamp() + '] Reconnecting to MQTT SERVER ' + hostname + ':' + port + '...');
-
-      // Set callback handlers
-      client.onConnectionLost = onConnectionLost;
-      client.onMessageArrived = onMessageArrived;
-
-      // Set client options
-
-
-  
-      var options = {
-        onSuccess: connected, // After connected, subscribes
-        onFailure: onFail,    // Useful for logging / debugging
-       	 useSSL: true
-      };
-
- var sslDropdown = document.getElementById("ssl_input");
-  options.useSSL = sslDropdown.value === "true";
-
-      // Connect the client
-      client.connect(options);
-
-      // Show the clear button
-      document.getElementById('clear_button').hidden = false;
-    }
 
 
 
@@ -590,7 +617,8 @@ document.getElementById('connect_button').innerHTML = 'Connect';
           document.getElementById('port3_text').hidden = true;
    	document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
-
+var dropdown = document.getElementById('ssl_input');
+dropdown.value = dropdown.options[0].value;
 port = document.getElementById('port1_input').value;
 
         } if (this.value === 'broker.emqx.io') {
@@ -604,6 +632,8 @@ port = document.getElementById('port1_input').value;
           document.getElementById('port3_text').hidden = true;
    document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
+var dropdown = document.getElementById('ssl_input');
+dropdown.value = dropdown.options[1].value;
 
 port = document.getElementById('port2_input').value;
 
@@ -618,6 +648,8 @@ port = document.getElementById('port2_input').value;
           document.getElementById('port3_text').hidden = false;
    document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
+var dropdown = document.getElementById('ssl_input');
+dropdown.value = dropdown.options[1].value;
 
 port = document.getElementById('port3_input').value;
 
@@ -641,6 +673,33 @@ port = document.getElementById('port9_input').value;
         }
       });
     }
+
+
+
+async function resolveDomain() {
+  var domain = document.getElementById('hostname_input').value;
+  // var resultElement = document.getElementById('result');
+  var ip = null;
+
+  try {
+    logConsole('[' + getFormattedTimestamp() + ']' + ' Resolving ' + domain);
+    var response = await fetch(`https://dns.google/resolve?name=${domain}`);
+    if (response.ok) {
+      var data = await response.json();
+      ip = data.Answer[0].data;
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Resolved!');
+    } else {
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to resolve IP address for ' + domain);
+    }
+  } catch (error) {
+    logConsole('[' + getFormattedTimestamp() + ']' + ' An error occurred: ' + error.message);
+  }
+
+  return ip;
+}
+
+
+
   </script>
 </body>
 </html>
