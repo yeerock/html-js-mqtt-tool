@@ -83,12 +83,21 @@
 <br><br>
   <button id="connect_button" type="button" onclick="connect();">Connect</button>
   <button id="disconnect_button" type="button" onclick="disconnect();" hidden>Disconnect</button>
+<span id="connectioncounttext">Lost Connection Count: </span><span id="connectionCount">0</span>
 
   <br>
   <br>
 
   <label for="topic_input" id="topic_text" hidden>Topic:</label>
   <input type="text" id="topic_input" value="Q68381394f785b63ctr" hidden>
+
+ <label for="subqos_input" id="subqos_text" hidden>QoS: </label>
+ <select id="subqos_input" hidden>
+    <option value="0">0 (At most once)</option>
+    <option value="1">1 (At least once)</option>
+    <option value="2" selected>2 (Exactly once)</option>
+    </select>
+
   <button id="subscribe_button" type="button" onclick="subscribe();" hidden>Subscribe</button> 
   <button id="unsubscribe_button" type="button" onclick="unsubscribe();" hidden>Unsubscribe</button> 
 
@@ -98,8 +107,8 @@
   <label for="message_input" id="message_text" hidden>Message:</label>
   <input type="text" id="message_input" hidden>
 
-  <label for="qos_input" id="qos_text" hidden>QoS: </label>
- <select id="qos_input" hidden>
+  <label for="sendqos_input" id="sendqos_text" hidden>QoS: </label>
+ <select id="sendqos_input" hidden>
     <option value="0">0 (At most once)</option>
     <option value="1">1 (At least once)</option>
     <option value="2" selected>2 (Exactly once)</option>
@@ -118,7 +127,7 @@
   <br>
   <br>
 
-  <button id="clear_button" type="button" onclick="clearConsole();" hidden>Clear Screen</button>
+  <button id="clear_button" type="button" onclick="clearConsole();" hidden>Clear Console</button>
 
   <br>
   <br>
@@ -467,6 +476,10 @@ document.getElementById('hostname_input').disabled = true;
       // Show the clear button
       document.getElementById('clear_button').hidden = false;
 
+
+
+let connectionCount = 0;
+
 }
 
     
@@ -505,8 +518,8 @@ document.getElementById('hostname_input').disabled = true;
         document.getElementById('unsubscribe_button').hidden = true;
         document.getElementById('message_text').hidden = true;
         document.getElementById('message_input').hidden = true;
-        document.getElementById('qos_text').hidden = true;
-        document.getElementById('qos_input').hidden = true;
+        document.getElementById('sendqos_text').hidden = true;
+        document.getElementById('sendqos_input').hidden = true;
         document.getElementById('retain_text').hidden = true;
         document.getElementById('retain_input').hidden = true;
         document.getElementById('send_button').hidden = true;
@@ -518,6 +531,8 @@ document.getElementById('hostname_input').disabled = true;
   	  document.getElementById('username_input').disabled = false;
    	 document.getElementById('password_input').disabled = false;
   	  document.getElementById('auth_input').disabled = false;
+  	  document.getElementById('subqos_text').hidden = true;
+  	  document.getElementById('subqos_input').hidden = true;
 
       }
     }
@@ -551,35 +566,54 @@ document.getElementById('hostname_input').disabled = true;
 
       document.getElementById('topic_text').hidden = false;
       document.getElementById('topic_input').hidden = false;
+      document.getElementById('subqos_text').hidden = false;
+      document.getElementById('subqos_input').hidden = false;
       document.getElementById('topic_input').disabled = false;
       document.getElementById('subscribe_button').hidden = false;
+      document.getElementById('subscribe_button').disabled = false;
     }
 
 
 
     function subscribe(context) {
       topic = document.getElementById('topic_input').value;
-      document.getElementById('send_button').hidden = false;
-      document.getElementById('subscribe_button').hidden = true;
-      document.getElementById('unsubscribe_button').hidden = false;
-      document.getElementById('topic_text').hidden = false;
-      document.getElementById('topic_input').hidden = false;
+   document.getElementById('subqos_text').disabled = true;
+      document.getElementById('subqos_input').disabled = true;
+    document.getElementById('subscribe_button').disabled = true;
+            document.getElementById('topic_input').disabled = false;
+       document.getElementById('subscribe_button').innerHTML = 'Subscribing';
+
+  
 
       logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribing to Topic: ' + topic + '...');
 
       // And subscribe to our topics -- all with the same callback function
       options = { qos: 0, onSuccess: function (context) { logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribed!'); } }
-      client.subscribe(topic, options);
 
-      document.getElementById('topic_text').disabled = true;
+ var subqosDropdown = document.getElementById("subqos_input");
+       var selectedsubQoS = parseInt(subqosDropdown.value);
+      options.qos = selectedsubQoS;
+
+      client.subscribe(topic, options);
+      document.getElementById('unsubscribe_button').hidden = false;
+       document.getElementById('subscribe_button').innerHTML = 'Subscribe';
+document.getElementById('subscribe_button').hidden = true;
+
       document.getElementById('topic_input').disabled = true;
       document.getElementById('message_text').hidden = false;
       document.getElementById('message_input').hidden = false;
-      document.getElementById('qos_text').hidden = false;
-      document.getElementById('qos_input').hidden = false;
+      document.getElementById('sendqos_text').hidden = false;
+      document.getElementById('sendqos_input').hidden = false;
       document.getElementById('retain_text').hidden = false;
       document.getElementById('retain_input').hidden = false;
       document.getElementById('send_button').hidden = false;
+document.getElementById('unsubscribe_button').hidden = false;
+
+
+ messageId = "Hi " + parseInt(Math.random() * 100000, 10);
+      document.getElementById('message_input').value = messageId;
+
+
     }
 
 
@@ -589,13 +623,16 @@ document.getElementById('hostname_input').disabled = true;
       logConsole('[' + getFormattedTimestamp() + ']' + ' Unsubscribing from Topic: ' + topic + '...');
 
       document.getElementById('subscribe_button').hidden = false;
+      document.getElementById('subscribe_button').disabled = false;
       document.getElementById('unsubscribe_button').hidden = true;
       document.getElementById('topic_input').disabled = false;
+      document.getElementById('subqos_text').disabled = false;
+      document.getElementById('subqos_input').disabled = false;
       document.getElementById('message_text').hidden = true;
       document.getElementById('message_input').hidden = true;
-      document.getElementById('qos_text').hidden = true;
-      document.getElementById('qos_input').hidden = true;
-    document.getElementById('retain_text').hidden = true;
+      document.getElementById('sendqos_text').hidden = true;
+      document.getElementById('sendqos_input').hidden = true;
+      document.getElementById('retain_text').hidden = true;
       document.getElementById('retain_input').hidden = true;
       document.getElementById('send_button').hidden = true;
 
@@ -607,7 +644,7 @@ document.getElementById('hostname_input').disabled = true;
 
 
     function onFail(context) {
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to connect' + error.errorMessage);
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to Connect!' + ' Error: ' + error.errorMessage + ' (QoS: ' + errorMessage.qos + ')');
    document.getElementById('mosquitto_radio').disabled = false;
       document.getElementById('emqx_radio').disabled = false;
       document.getElementById('mqtthq_radio').disabled = false;
@@ -622,6 +659,14 @@ document.getElementById('hostname_input').disabled = true;
 document.getElementById('connect_button').disabled = false;
 document.getElementById('connect_button').innerHTML = 'Connect';
 
+  // Increment the message count
+  connectionCount++;
+
+  // Update the message count in the HTML
+  updateconnectionCount();
+
+	reconnect();
+
     }
 
 
@@ -629,7 +674,7 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 
     function onConnectionLost(responseObject) {
       if (responseObject.errorCode !== 0) {
-        logConsole('[' + getFormattedTimestamp() + ']' + ' Connection Lost: ' + responseObject.errorMessage);
+        logConsole('[' + getFormattedTimestamp() + ']' + ' Connection Lost! ' + 'Error: ' + responseObject.errorMessage + ' (Qos: ' + message.qos + ', Retained: ' + message.retained + ')');
  document.getElementById('mosquitto_radio').disabled = false;
       document.getElementById('emqx_radio').disabled = false;
       document.getElementById('mqtthq_radio').disabled = false;
@@ -644,8 +689,11 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 document.getElementById('connect_button').disabled = false;
 document.getElementById('connect_button').innerHTML = 'Connect';
 
+  // Increment the message count
+  connectionCount++;
 
-
+  // Update the message count in the HTML
+  updateconnectionCount();
 
 	reconnect();
 
@@ -655,8 +703,8 @@ document.getElementById('connect_button').innerHTML = 'Connect';
 
 
     function onMessageArrived(message) {
-popup();
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving Message: ' + message.payloadString);
+
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving Message: ' + message.payloadString + ' (QoS: ' + message.qos + ', Retained: ' + message.retained + ')');
       if (message.destinationName == topic) {
 
       }
@@ -682,16 +730,16 @@ popup();
     
       message = new Paho.MQTT.Message(payload);
       message.destinationName = topic;
-       var qosDropdown = document.getElementById("qos_input");
-       var selectedQoS = parseInt(qosDropdown.value);
-      message.qos = selectedQoS;
+       var sendqosDropdown = document.getElementById("sendqos_input");
+       var selectedsendQoS = parseInt(sendqosDropdown.value);
+      message.qos = selectedsendQoS;
 
   var retainDropdown = document.getElementById("retain_input");
-  var selectedRetain = (retainDropdown.value === "True");
+  var selectedRetain = (retainDropdown.value === "true");
   message.retained = selectedRetain;
   
       client.send(message);
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Sending Message: ' + payload);
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Sending Message: ' + payload + ' (QoS: ' + message.qos + ', Retained: ' + message.retained + ')');
     }
 
    // function logConsole(message) {
@@ -703,17 +751,28 @@ popup();
    // }
 
 function logConsole(message) {
+
+
+
+
+
   var consoleElement = document.getElementById('console');
   consoleElement.innerHTML = message + '<br>' + consoleElement.innerHTML;
   if (consoleElement.innerHTML !== "") {
     document.getElementById('clear_button').disabled = false;
   }
+
+  // Apply CSS styles
+  consoleElement.style.backgroundColor = 'black';
+  consoleElement.style.color = 'white';
+
 }
 
     function clearConsole() {
       var consoleElement = document.getElementById('console');
       consoleElement.innerHTML = "";
       document.getElementById('clear_button').disabled = true;
+      logConsole('[' + getFormattedTimestamp() + ']' + ' New Console Initialized');
     }
 
 
@@ -842,7 +901,24 @@ return error;
 
 }
 
+// Initialize the counter variable
+let connectionCount = 0;
 
+// Update the message count in the HTML
+function updateconnectionCount() {
+  const countElement = document.getElementById('connectionCount');
+
+ // Apply CSS style
+  countElement.style.color = 'red';
+
+  countElement.textContent = connectionCount.toString();
+
+  const connectioncounttextElement = document.getElementById('connectioncounttext');
+
+  // Apply CSS style
+  connectioncounttextElement.style.color = 'red';
+
+}
 
 
 
