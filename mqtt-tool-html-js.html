@@ -47,16 +47,17 @@
   <label for="port2_input" id="port2_text" hidden>Port:</label>
  <select id="port2_input" hidden>
     <option value="1883">1883 (TCP)</option>
-    <option value="8083" selected>8083 (WebSocket)</option>
+    <option value="8083" >8083 (WebSocket)</option>
     <option value="8883">8883 (SSL/TLS)</option>
-    <option value="8084">8084 (WebSocket Secure)</option>
+    <option value="8084" selected>8084 (WebSocket Secure)</option>
     </select>
 
 
   <label for="port3_input" id="port3_text" hidden>Port: </label>
  <select id="port3_input" hidden>
     <option value="1883">1883 (TCP)</option>
-    <option value="8083" selected>8083 (WebSocket)</option>
+    <option value="8083" >8083 (WebSocket)</option>
+    <option value="8084" selected>8084 (WebSocket Secure)</option>
     </select>
 
 
@@ -67,7 +68,7 @@
 
 <label for="ssl_input" id="ssl_text" hidden>Use SSL: </label>
 <select id="ssl_input" hidden onchange="onSSLChange()">
-  <option value="true">Yes</option>
+  <option value="true" >Yes</option>
   <option value="false">No</option>
 </select>
 
@@ -1014,8 +1015,6 @@ document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
 document.getElementById('connect_button').hidden = false;
 
-
-
           document.getElementById('hostname_input').disabled = true;
           document.getElementById('hostname_input').value = 'broker.emqx.io';
           document.getElementById('port1_input').hidden = true;
@@ -1027,8 +1026,9 @@ document.getElementById('connect_button').hidden = false;
    document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
 var dropdown = document.getElementById('ssl_input');
-dropdown.value = dropdown.options[1].value;
-
+dropdown.value = dropdown.options[0].value;
+var selectport = document.getElementById('port2_input');
+selectport.value = selectport.options[3].value;
 var port = document.getElementById('port2_input').value;
 
         } if (this.value === 'public.mqtthq.com') {
@@ -1059,9 +1059,6 @@ document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
 document.getElementById('connect_button').hidden = false;
-
-
-
           document.getElementById('hostname_input').disabled = true;
           document.getElementById('hostname_input').value = 'public.mqtthq.com';
           document.getElementById('port1_input').hidden = true;
@@ -1073,7 +1070,9 @@ document.getElementById('connect_button').hidden = false;
    document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
 var dropdown = document.getElementById('ssl_input');
-dropdown.value = dropdown.options[1].value;
+dropdown.value = dropdown.options[0].value;
+var selectport = document.getElementById('port3_input');
+selectport.value = selectport.options[2].value;
 
  var port = document.getElementById('port3_input').value;
 
@@ -1105,9 +1104,6 @@ document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
 document.getElementById('connect_button').hidden = false;
-
-
-
           document.getElementById('hostname_input').disabled = false;
           document.getElementById('hostname_input').value = '52.13.116.147';
         document.getElementById('port1_input').hidden = true;
