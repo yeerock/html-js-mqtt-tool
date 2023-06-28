@@ -26,7 +26,7 @@
   <br><br>
 
   <label for="hostname_input" id="hostname_text" hidden>Hostname: </label>
-  <input type="text" id="hostname_input" value="test.mosquitto.org" size="20" disabled hidden>
+  <input type="text" id="hostname_input" value="test.mosquitto.org" size="20" onchange="hostnameChanged()" disabled hidden>
 
   <label for="port1_input" id="port1_text" hidden>Port: </label>
  <select id="port1_input" hidden>
@@ -62,7 +62,7 @@
 
 
   <label for="port9_input" id="port9_text" hidden>Port: </label>
-  <input type="text" id="port9_input" size="3" hidden>
+  <input type="text" id="port9_input" size="3" onchange="port9Changed()" hidden>
 
 <br><br>
 
@@ -73,28 +73,26 @@
 </select>
 
 <label for="auth_input" id="auth_text" hidden>Required Login: </label>
-<select id="auth_input" hidden onchange="onAUTHChange()">
+<select id="auth_input" onchange="onAUTHChange()" hidden>
   <option value="true">Yes</option>
   <option value="false" selected>No</option>
 </select>
 
   <label for="username_input" id="username_text" hidden>Username: </label>
-  <input type="text" id="username_input" hidden>
+  <input type="text" id="username_input" onchange="usernameChanged()" hidden>
 
   <label for="password_input" id="password_text" hidden>Password: </label>
-  <input type="text" id="password_input" hidden>
+  <input type="text" id="password_input" onchange="passwordChanged()" hidden>
 
 <br><br>
 
  <label for="timeout_input" id="timeout_text" hidden>Connection Timeout (Second): </label>
-  <input type="text" id="timeout_input" value="5" size="1" hidden>
+  <input type="text" id="timeout_input" value="5" size="1" onchange="timeoutChanged()" hidden>
 
 
 
   <button id="connect_button" type="button" onclick="connect();" hidden>Connect</button>
   <button id="disconnect_button" type="button" onclick="disconnect();" hidden>Disconnect</button>
-
-
 
   <br><br>
 
@@ -113,10 +111,10 @@
   <br><br>
 
   <label for="topic_input" id="topic_text" hidden>Topic:</label>
-  <input type="text" id="topic_input" value="Q68381394f785b63ctr" hidden>
+  <input type="text" id="topic_input" onchange="topicChanged()" hidden>
 
  <label for="subqos_input" id="subqos_text" hidden>QoS: </label>
- <select id="subqos_input" hidden>
+ <select id="subqos_input" onchange="subqosChanged()" hidden>
     <option value="0">0 (At most once)</option>
     <option value="1">1 (At least once)</option>
     <option value="2" selected>2 (Exactly once)</option>
@@ -129,17 +127,17 @@
   <br>
 
   <label for="message_input" id="message_text" hidden>Message:</label>
-  <input type="text" id="message_input" hidden>
+  <input type="text" id="message_input" onchange="messageChanged()" hidden>
 
   <label for="sendqos_input" id="sendqos_text" hidden>QoS: </label>
- <select id="sendqos_input" hidden>
+ <select id="sendqos_input" onchange="sendqosChanged()" hidden>
     <option value="0">0 (At most once)</option>
     <option value="1">1 (At least once)</option>
     <option value="2" selected>2 (Exactly once)</option>
     </select>
 
   <label for="retain_input" id="retain_text" hidden>Retain: </label>
- <select id="retain_input" hidden>
+ <select id="retain_input" onchange="retainChanged()" hidden>
     <option value="true" selected>Yes</option>
     <option value="false">No</option>
     </select>
@@ -175,22 +173,33 @@ let errorCode;
     var topic;
     var clientId;
     var ip;
+    var username;
+    var password;
 
     var storage = localStorage;
     var value = storage.getItem('key');
-    if (value === '1') {
-    document.getElementById("checkbox3_input").checked = true;
-   
-    }
+    if (value === '1') {document.getElementById("checkbox3_input").checked = true;}
 
 
 
 function onSSLChange() {
   var useSSLDropdown = document.getElementById("ssl_input");
   options.useSSL = useSSLDropdown.value;
+
+var otherradioselected = document.getElementById("other_radio");
+ if (otherradioselected.checked) {
+ var selectssl = document.getElementById("ssl_input");
+var selectedsslOption = selectssl.selectedIndex ;
+localStorage.setItem('selectedsslOption', selectedsslOption);
+}
+
 }
 
 function onAUTHChange() {
+
+ document.getElementById('username_input').value = storage.getItem('customusername');
+ document.getElementById('password_input').value = storage.getItem('custompassword');
+
   var useAUTHDropdown = document.getElementById("auth_input");
 
 if (useAUTHDropdown.value === "true")
@@ -209,27 +218,35 @@ document.getElementById('password_input').hidden = true; }
 
   options.useAUTH = useAUTHDropdown.value;
 
+var otherradioselected = document.getElementById("other_radio");
+
+if (otherradioselected.checked) {
+var selectauth = document.getElementById("auth_input");
+var selectedauthOption = selectauth.selectedIndex ;
+localStorage.setItem('selectedauthOption', selectedauthOption);
+
 }
 
 
+}
+
+async function connect() {
+
+stopCountup();
 
 
-
-  async function connect() {
-
-
+document.getElementById('hostname_input').placeholder = '';
+document.getElementById('port9_input').placeholder = '';
+document.getElementById('username_input').placeholder = '';
+document.getElementById('password_input').placeholder = '';
 
  //clearConsole();
 
-     // Get input values   
+     // Get input values
       var mosquittoRadio = document.getElementById("mosquitto_radio");
       var emqxRadio = document.getElementById("emqx_radio");
       var mqtthqRadio = document.getElementById("mqtthq_radio");
       var otherRadio = document.getElementById("other_radio");
-
-      hostname = document.getElementById('hostname_input').value;
-      var username = document.getElementById('username_input').value;
-      var password = document.getElementById('password_input').value;
 
        port1Input = document.getElementById("port1_input");
        port2Input = document.getElementById("port2_input");
@@ -239,19 +256,24 @@ document.getElementById('password_input').hidden = true; }
      if (mosquittoRadio.checked) {port = port1Input.value;}
      if (emqxRadio.checked) {port = port2Input.value;} 
      if (mqtthqRadio.checked) {port = port3Input.value;} 
-     if (otherRadio.checked) {port = port9Input.value;} 
-    
-      // Check if hostname is empty
+     if (otherRadio.checked) {hostname = storage.getItem('customhostname'); port = port9Input.value;} 
+
+hostname = document.getElementById('hostname_input').value;
+
       if (hostname === '') {
+document.getElementById('hostname_input').placeholder = 'Please enter hostname!';
       return; // Stop further execution
       }
 
-      // Check if port is empty
       if (port === '') {
+document.getElementById('port9_input').placeholder = 'Please enter port!';
       return; // Stop further execution
       }
 
-	var authdropdown = document.getElementById('auth_input');
+username = document.getElementById('username_input').value;
+password = document.getElementById('password_input').value;
+
+var authdropdown = document.getElementById('auth_input');
 	
 if (authdropdown.value  ===  'true'){
   if (username === '') {
@@ -267,17 +289,22 @@ if (authdropdown.value  ===  'true'){
       }
 
 }
-  // Regular expression patterns
-  const ipPattern = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
-  const domainPattern = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
 
-  if (domainPattern.test(hostname)) {
-   ip = await resolveDomain();
-  } else if (ipPattern.test(hostname)) {
-    ip = hostname;
-  } else {
-    ip = hostname;
-  }  
+let ipPattern = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+let domainPattern = /^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,63}$/i;
+
+
+// Assuming ipPattern and domainPattern are regular expressions for IP and domain respectively
+if (domainPattern.test(hostname)) {
+   ip = await resolveDomain(hostname); // Pass hostname to the resolveDomain function
+} else if (ipPattern.test(hostname)) {
+   ip = hostname;
+} else {
+   document.getElementById('hostname_input').value = '';
+   document.getElementById('hostname_input').placeholder = 'Please enter valid hostname!';
+   return; // Stop further execution
+}
+
 
     // Create client ID or load from storage
     if (window.sessionStorage.clientId) {
@@ -290,8 +317,7 @@ if (authdropdown.value  ===  'true'){
 
       // Set up the client
       client = new Paho.MQTT.Client(hostname, Number(port), clientId);
-      logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + '...');
-
+     
       // Connection result event handler
       client.onConnectionLost = onConnectionLost;
 
@@ -320,11 +346,28 @@ if (authdropdown.value  ===  'true'){
 
 }
 
-  var timeout = document.getElementById("timeout_input");
- options.timeout = parseInt(timeout.value*1000);
+  var timeout = document.getElementById("timeout_input").value;
+ options.timeout = parseInt(timeout*1000);
 
       // Connect the client
       client.connect(options);
+
+if ((options.useSSL === true) && (authdropdown.value === 'false')) {
+   logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (SSL' + ', Timeout: ' + options.timeout/1000  + 's)');
+}
+
+if ((options.useSSL === false) && (authdropdown.value === 'false')) {
+   logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (Timeout: ' + options.timeout/1000  + 's)');
+}
+
+if ((options.useSSL === true) && (authdropdown.value === 'true')) {
+   logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (SSL, AUTH' + ', Timeout: ' + options.timeout/1000  + 's)');
+}
+
+if ((options.useSSL === false) && (authdropdown.value === 'true')) {
+   logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (AUTH, Timeout: ' + options.timeout/1000  + 's)');
+}
+
 
 await startCountup1();
 
@@ -336,7 +379,6 @@ document.getElementById('hostname_input').disabled = true;
 	document.getElementById('port9_input').disabled = true;
 	document.getElementById('timeout_text').disabled = true;
 	document.getElementById('timeout_input').disabled = true;
-
 
   document.getElementById('mosquitto_radio').disabled = true;
       document.getElementById('emqx_radio').disabled = true;
@@ -357,6 +399,19 @@ document.getElementById('hostname_input').disabled = true;
       // Show the clear button
       document.getElementById('clear_button').hidden = false;
 
+      document.getElementById('connectiontext').hidden = false;
+      document.getElementById('failedcounttext').hidden = false;
+      document.getElementById('failedcount').hidden = false;
+      document.getElementById('bar').hidden = false;
+      document.getElementById('lostcounttext').hidden = false;
+      document.getElementById('lostcount').hidden = false;
+    document.getElementById('checkbox1_input').hidden = false;
+    document.getElementById('checkbox1_text').hidden = false;
+document.getElementById('reset_button').disabled = true;
+document.getElementById('reset_button').hidden = false;
+
+
+
 
 
 }
@@ -365,6 +420,8 @@ document.getElementById('hostname_input').disabled = true;
 
   async function reconnect() {
 
+stopCountup();
+
 
        var mosquittoRadio = document.getElementById("mosquitto_radio");
       var emqxRadio = document.getElementById("emqx_radio");
@@ -372,8 +429,8 @@ document.getElementById('hostname_input').disabled = true;
       var otherRadio = document.getElementById("other_radio");
 
       hostname = document.getElementById('hostname_input').value;
-      var username = document.getElementById('username_input').value;
-      var password = document.getElementById('password_input').value;
+      username = document.getElementById('username_input').value;
+      password = document.getElementById('password_input').value;
 
        port1Input = document.getElementById("port1_input");
        port2Input = document.getElementById("port2_input");
@@ -436,7 +493,7 @@ if (authdropdown.value  ===  'true'){
 
       // Set up the client
       client = new Paho.MQTT.Client(hostname, Number(port), clientId);
-      logConsole('[' + getFormattedTimestamp() + '] Automatically reconnecting to ' + ip + ':' + port + '...');
+  
 
       // Connection result event handler
       client.onConnectionLost = onConnectionLost;
@@ -470,6 +527,14 @@ if (authdropdown.value  ===  'true'){
       // Connect the client
       client.connect(options);
 
+if (options.useSSL === true) {
+ logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (Use SSL' + ', Timeout: ' + options.timeout  + ')');
+}
+
+if (options.useSSL === false) {
+ logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (No SSL, Timeout: ' + options.timeout  + ')');
+}
+
 
 
 await startCountup2();
@@ -501,6 +566,16 @@ document.getElementById('hostname_input').disabled = true;
       // Show the clear button
       document.getElementById('clear_button').hidden = false;
 
+    document.getElementById('connectiontext').hidden = false;
+      document.getElementById('failedcounttext').hidden = false;
+      document.getElementById('failedcount').hidden = false;
+      document.getElementById('bar').hidden = false;
+      document.getElementById('lostcounttext').hidden = false;
+      document.getElementById('lostcount').hidden = false;
+    document.getElementById('checkbox1_input').hidden = false;
+    document.getElementById('checkbox1_text').hidden = false;
+
+
 
 }
 
@@ -509,6 +584,12 @@ document.getElementById('hostname_input').disabled = true;
 
   async function disconnect() {
 stopCountup();
+
+
+
+var other_radio = document.getElementById('other_radio');
+if (other_radio.checked) {
+document.getElementById('hostname_input').disabled = false; }
 
       if (client) {
         logConsole('[' + getFormattedTimestamp() + ']' + ' Disconnecting from ' + ip + ':' + port);
@@ -539,6 +620,7 @@ stopCountup();
       document.getElementById('lostcount').hidden = true;
     document.getElementById('checkbox1_input').hidden = true;
     document.getElementById('checkbox1_text').hidden = true;
+document.getElementById('reset_button').hidden = true;
 
 
 
@@ -565,6 +647,8 @@ stopCountup();
   	  document.getElementById('auth_input').disabled = false;
   	  document.getElementById('subqos_text').hidden = true;
   	  document.getElementById('subqos_input').hidden = true;
+
+
 
       }
     }
@@ -698,6 +782,9 @@ document.getElementById('unsubscribe_button').hidden = false;
 
     function onFail(responseObject) {
 
+document.getElementById('reset_button').disabled = false;
+document.getElementById('reset_button').hidden = false;
+
  onFailCalled = true;
 
       logConsole('[' + getFormattedTimestamp() + ']' + ' Failed to Connect!' + ' Error: ' + responseObject.errorMessage);
@@ -734,12 +821,19 @@ document.getElementById('unsubscribe_button').hidden = false;
   var checkbox1 = document.getElementById('checkbox1_input');
   if (checkbox1.checked) {reconnect();}
 
+      document.getElementById('username_input').disabled = false;
+      document.getElementById('password_input').disabled = false;
+
     }
 
 
 
 
     function onConnectionLost(responseObject) {
+
+document.getElementById('reset_button').disabled = false;
+document.getElementById('reset_button').hidden = false;
+
       if (responseObject.errorCode !== 0) {
         logConsole('[' + getFormattedTimestamp() + ']' + ' Connection Lost! ' + 'Error: ' + responseObject.errorMessage);
  document.getElementById('connect_button').innerHTML = 'Connect';
@@ -943,7 +1037,12 @@ if (message.includes('Failed to Connect') || message.includes('Connection Lost')
     for (var i = 0; i < radioOptions.length; i++) {
       radioOptions[i].addEventListener('change', function () {
 
+
+
+
         if (this.value === 'test.mosquitto.org') {
+stopCountup();
+
 value = storage.getItem('key');
     if (value === '1') {
     document.getElementById("checkbox3_input").checked = true;
@@ -971,7 +1070,6 @@ document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
 document.getElementById('connect_button').hidden = false;
 
-
           document.getElementById('hostname_input').disabled = true;
           document.getElementById('hostname_input').value = 'test.mosquitto.org';
           document.getElementById('port1_input').hidden = false;
@@ -982,11 +1080,33 @@ document.getElementById('connect_button').hidden = false;
           document.getElementById('port3_text').hidden = true;
    	document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
+
+document.getElementById('connectiontext').hidden = true;
+document.getElementById('failedcounttext').hidden = true;
+document.getElementById('failedcount').hidden = true;
+document.getElementById('bar').hidden = true;
+document.getElementById('lostcounttext').hidden = true;
+document.getElementById('lostcount').hidden = true;
+document.getElementById('checkbox1_input').hidden = true;
+document.getElementById('checkbox1_text').hidden = true;
+document.getElementById('reset_button').hidden = true;
+
+
+
 var dropdown = document.getElementById('ssl_input');
 dropdown.value = dropdown.options[0].value;
 var port = document.getElementById('port1_input').value;
 
+document.getElementById('topic_input').value = storage.getItem('customtopic');
+document.getElementById('username_text').hidden = true;
+document.getElementById('username_input').hidden = true;
+document.getElementById('password_text').hidden = true;
+document.getElementById('password_input').hidden = true;
+
+
         } if (this.value === 'broker.emqx.io') {
+
+stopCountup();
 
 value = storage.getItem('key');
     if (value === '1') {
@@ -1025,13 +1145,37 @@ document.getElementById('connect_button').hidden = false;
           document.getElementById('port3_text').hidden = true;
    document.getElementById('port9_text').hidden = true;
         document.getElementById('port9_input').hidden = true;
+
+document.getElementById('connectiontext').hidden = true;
+document.getElementById('failedcounttext').hidden = true;
+document.getElementById('failedcount').hidden = true;
+document.getElementById('bar').hidden = true;
+document.getElementById('lostcounttext').hidden = true;
+document.getElementById('lostcount').hidden = true;
+document.getElementById('checkbox1_input').hidden = true;
+document.getElementById('checkbox1_text').hidden = true;
+document.getElementById('reset_button').hidden = true;
+
+
+
 var dropdown = document.getElementById('ssl_input');
 dropdown.value = dropdown.options[0].value;
 var selectport = document.getElementById('port2_input');
 selectport.value = selectport.options[3].value;
 var port = document.getElementById('port2_input').value;
 
+document.getElementById('topic_input').value = storage.getItem('customtopic');
+
+document.getElementById('username_text').hidden = true;
+document.getElementById('username_input').hidden = true;
+document.getElementById('password_text').hidden = true;
+document.getElementById('password_input').hidden = true;
+
+
+
         } if (this.value === 'public.mqtthq.com') {
+
+stopCountup();
 
 value = storage.getItem('key');
     if (value === '1') {
@@ -1059,16 +1203,29 @@ document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
 document.getElementById('connect_button').hidden = false;
-          document.getElementById('hostname_input').disabled = true;
-          document.getElementById('hostname_input').value = 'public.mqtthq.com';
-          document.getElementById('port1_input').hidden = true;
-          document.getElementById('port1_text').hidden = true;
-        document.getElementById('port2_input').hidden = true;
-          document.getElementById('port2_text').hidden = true;
-     document.getElementById('port3_input').hidden = false;
-          document.getElementById('port3_text').hidden = false;
-   document.getElementById('port9_text').hidden = true;
-        document.getElementById('port9_input').hidden = true;
+document.getElementById('hostname_input').disabled = true;
+document.getElementById('hostname_input').value = 'public.mqtthq.com';
+document.getElementById('port1_input').hidden = true;
+document.getElementById('port1_text').hidden = true;
+document.getElementById('port2_input').hidden = true;
+document.getElementById('port2_text').hidden = true;
+document.getElementById('port3_input').hidden = false;
+document.getElementById('port3_text').hidden = false;
+document.getElementById('port9_text').hidden = true;
+document.getElementById('port9_input').hidden = true;
+
+document.getElementById('connectiontext').hidden = true;
+document.getElementById('failedcounttext').hidden = true;
+document.getElementById('failedcount').hidden = true;
+document.getElementById('bar').hidden = true;
+document.getElementById('lostcounttext').hidden = true;
+document.getElementById('lostcount').hidden = true;
+document.getElementById('checkbox1_input').hidden = true;
+document.getElementById('checkbox1_text').hidden = true;
+document.getElementById('reset_button').hidden = true;
+
+
+
 var dropdown = document.getElementById('ssl_input');
 dropdown.value = dropdown.options[0].value;
 var selectport = document.getElementById('port3_input');
@@ -1076,27 +1233,41 @@ selectport.value = selectport.options[2].value;
 
  var port = document.getElementById('port3_input').value;
 
-        } if (this.value === 'other_server') {
+document.getElementById('topic_input').value = storage.getItem('customtopic');
+
+document.getElementById('username_text').hidden = true;
+document.getElementById('username_input').hidden = true;
+document.getElementById('password_text').hidden = true;
+document.getElementById('password_input').hidden = true;
+
+var ssldropdown = document.getElementById('ssl_input');
+ssldropdown.selectedIndex = 0;
+
+var authdropdown = document.getElementById('auth_input');
+authdropdown.selectedIndex = 1;
+
+var subqosdropdown = document.getElementById('subqos_input');
+subqosdropdown.selectedIndex = 2;
+
+var sendqosdropdown = document.getElementById('sendqos_input');
+sendqosdropdown.selectedIndex = 2;
+
+
+
+} if (this.value === 'other_server') {
+
+stopCountup();
 
 value = storage.getItem('key');
-    if (value === '1') {
-    document.getElementById("checkbox3_input").checked = true;
-   document.getElementById('hostname_input').value = '52.13.116.147';
- document.getElementById('port9_input').value = '8083';
-    connect();}
+if (value === '1') {
+document.getElementById("checkbox3_input").checked = true;
+document.getElementById('hostname_input').value = storage.getItem('customhostname');
+document.getElementById('port9_input').value = storage.getItem('customport'); connect();}
 
 document.getElementById('hostname_text').hidden = false;
 document.getElementById('hostname_input').hidden = false;
-document.getElementById('port1_text').hidden = false;
-document.getElementById('port1_input').hidden = false;
-document.getElementById('port2_text').hidden = false;
-document.getElementById('port2_input').hidden = false;
-document.getElementById('port3_text').hidden = false;
-document.getElementById('port3_input').hidden = false;
 document.getElementById('port9_text').hidden = false;
 document.getElementById('port9_input').hidden = false;
-document.getElementById('ssl_text').hidden = false;
-document.getElementById('ssl_input').hidden = false;
 document.getElementById('auth_text').hidden = false;
 document.getElementById('auth_input').hidden = false;
 document.getElementById('timeout_text').hidden = false;
@@ -1104,22 +1275,70 @@ document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
 document.getElementById('connect_button').hidden = false;
-          document.getElementById('hostname_input').disabled = false;
-          document.getElementById('hostname_input').value = '52.13.116.147';
-        document.getElementById('port1_input').hidden = true;
-          document.getElementById('port1_text').hidden = true;
-        document.getElementById('port2_input').hidden = true;
-          document.getElementById('port2_text').hidden = true;
+document.getElementById('hostname_input').disabled = false;
+document.getElementById('hostname_input').value = storage.getItem('customhostname');
+document.getElementById('port9_input').value = storage.getItem('customport');
+document.getElementById('timeout_input').value = storage.getItem('customtimeout');
+document.getElementById('topic_input').value = storage.getItem('customtopic');
 
-        document.getElementById('port3_input').hidden = true;
-          document.getElementById('port3_text').hidden = true;
+document.getElementById('port1_input').hidden = true;
+document.getElementById('port1_text').hidden = true;
+document.getElementById('port2_input').hidden = true;
+document.getElementById('port2_text').hidden = true;
+document.getElementById('port3_input').hidden = true;
+document.getElementById('port3_text').hidden = true;
+document.getElementById('ssl_text').hidden = false;
+document.getElementById('ssl_input').hidden = false;
 
-          document.getElementById('port9_text').hidden = false;
+document.getElementById('connectiontext').hidden = true;
+document.getElementById('failedcounttext').hidden = true;
+document.getElementById('failedcount').hidden = true;
+document.getElementById('bar').hidden = true;
+document.getElementById('lostcounttext').hidden = true;
+document.getElementById('lostcount').hidden = true;
+document.getElementById('checkbox1_input').hidden = true;
+document.getElementById('checkbox1_text').hidden = true;
+document.getElementById('reset_button').hidden = true;
 
-        document.getElementById('port9_input').hidden = false;
-        document.getElementById('ssl_input').hidden = false;
-          document.getElementById('port9_input').value = '8083';
+
+
+var savedssl = localStorage.getItem('selectedsslOption');
+var ssldropdown = document.getElementById('ssl_input');
+ssldropdown.selectedIndex = savedssl;
+
+var savedauth = localStorage.getItem('selectedauthOption');
+var authdropdown = document.getElementById('auth_input');
+authdropdown.selectedIndex = savedauth;
+
+var savedsubqos = localStorage.getItem('selectedsubqosOption');
+var subqosdropdown = document.getElementById('subqos_input');
+subqosdropdown.selectedIndex = savedsubqos;
+
+var savedsendqos = localStorage.getItem('selectedsendqosOption');
+var sendqosdropdown = document.getElementById('sendqos_input');
+sendqosdropdown.selectedIndex = savedsendqos;
+
 var port = document.getElementById('port9_input').value;
+
+var selectauth = document.getElementById("auth_input").value;
+
+if (selectauth === "true") {
+  document.getElementById("username_text").hidden = false;
+  document.getElementById("username_input").hidden = false;
+  document.getElementById("password_text").hidden = false;
+  document.getElementById("password_input").hidden = false;
+
+ document.getElementById('username_input').value = storage.getItem('customusername');
+ document.getElementById('password_input').value = storage.getItem('custompassword');
+
+var hostname = document.getElementById('hostname_input').value;
+
+
+
+
+}
+
+
         }
       });
     }
@@ -1185,8 +1404,6 @@ const failedcountElement = document.getElementById('failedcount');
 
 
 
-
-
  var checkbox1 = document.getElementById('checkbox1_input');
 
 function checkbox1Changed() {
@@ -1242,7 +1459,6 @@ else {
 
 
 
-
 function resetcounter() {
     logConsole('[' + getFormattedTimestamp() + '] Connection Counter Resetted!');
 failedcount = 0;
@@ -1261,7 +1477,7 @@ const failedcountElement = document.getElementById('failedcount');
   failedcountElement.style.color = 'black';
   failedcountElement.textContent = 0;
 
-//document.getElementById('reset_button').hidden = true;
+document.getElementById('reset_button').disabled = true;
 //   document.getElementById('connectiontext').hidden = true;
  //     document.getElementById('failedcounttext').hidden = true;
   //    document.getElementById('failedcount').hidden = true;
@@ -1345,32 +1561,113 @@ var connectbutton1 = document.getElementById("connect_button");
 //connectbutton1.disabled = true;
 }
 
- var checkbox3 = document.getElementById('checkbox3_input');
+
+
+
+
 function checkbox3Changed() {
+
+ var checkbox3 = document.getElementById('checkbox3_input');
    if (checkbox3.checked) {
 storage.setItem('key', '1');     
     logConsole('[' + getFormattedTimestamp() + '] Automatic Connect Enabled!');
 
-
 var radioBtn1 = document.getElementById('mosquitto_radio');
-if (radioBtn.checked) {connect();}
+if (radioBtn1.checked) {connect();}
 
 var radioBtn2 = document.getElementById('emqx_radio');
-if (radioBtn.checked) {connect();}
+if (radioBtn2.checked) {connect();}
 
-var radioBtn3 = document.getElementById('mqttha_radio');
-if (radioBtn.checked) {connect();}
+var radioBtn3 = document.getElementById('mqtthq_radio');
+if (radioBtn3.checked) {connect();}
 
 var radioBtn4 = document.getElementById('other_radio');
-if (radioBtn.checked) {connect();}
+if (radioBtn4.checked) {connect();}
 
 
   }
 else {
  storage.setItem('key', '0');
    logConsole('[' + getFormattedTimestamp() + '] Automatic Connect Disabled!');
+}
+
 
 }
+
+
+function hostnameChanged()
+{
+var otherradio = document.getElementById('other_radio');
+if (otherradio.checked) {
+var customhostname = document.getElementById('hostname_input').value;
+localStorage.setItem('customhostname', customhostname);  }
+}
+
+
+function port9Changed()
+{
+var otherradio = document.getElementById('other_radio');
+if (otherradio.checked) {
+var customport = document.getElementById('port9_input').value;
+localStorage.setItem('customport', customport);}
+}
+
+function timeoutChanged()
+{
+
+var customtimeout = document.getElementById('timeout_input').value;
+localStorage.setItem('customtimeout', customtimeout);
+}
+
+function topicChanged()
+{
+var customtopic = document.getElementById('topic_input').value;
+localStorage.setItem('customtopic', customtopic);
+}
+
+function messageChanged()
+{
+var custommessage = document.getElementById('message_input').value;
+localStorage.setItem('custommessage', custommessage);
+}
+
+
+function subqosChanged()
+{
+var selectsubqos = document.getElementById("subqos_input");
+var selectsubqosOption = selectsubqos.selectedIndex ;
+localStorage.setItem('selectsubqosOption', selectsubqosOption);
+}
+
+
+function sendqosChanged()
+{
+var selectsendqos = document.getElementById("sendqos_input");
+var selectsendqosOption = selectsendqos.selectedIndex ;
+localStorage.setItem('selectsendqosOption', selectsendqosOption);
+}
+
+function retainChanged()
+{
+var selectretain = document.getElementById("retain_input");
+var selectretainOption = selectretain.selectedIndex ;
+localStorage.setItem('selectretainOption', selectretainOption);
+}
+
+function usernameChanged()
+{
+var other_radio = document.getElementById('other_radio');
+if (other_radio.checked) {
+var customusername = document.getElementById('username_input').value;
+localStorage.setItem('customusername', customusername);}
+}
+
+function passwordChanged()
+{
+var other_radio = document.getElementById('other_radio');
+if (other_radio.checked) {
+var custompassword = document.getElementById('password_input').value;
+localStorage.setItem('custompassword', custompassword);}
 }
 
 
