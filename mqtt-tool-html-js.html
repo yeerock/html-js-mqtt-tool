@@ -727,6 +727,8 @@ document.getElementById('reset_button').hidden = true;
       client.subscribe(topic, options);
 
 
+
+
 messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
       document.getElementById('message_input').value = messageId;
 
@@ -916,14 +918,16 @@ document.getElementById('checkbox1_input').disabled = false;
 
       var messagecontent = document.getElementById('message_input').value;
 
-  if (messagecontent === '') {
-        document.getElementById('message_input').placeholder = 'Please enter message!';
-	document.getElementById('port9_input').disabled = false;
-   document.getElementById('timeout_text').disabled = false;
-      document.getElementById('timeout_input').disabled = false;
-	document.getElementById('connect_button').disabled = false;
-        return; // Stop further execution
-      }
+
+
+ // if (messagecontent === '') {
+  //      document.getElementById('message_input').placeholder = 'Please enter message!';
+//	document.getElementById('port9_input').disabled = false;
+//   document.getElementById('timeout_text').disabled = false;
+  //    document.getElementById('timeout_input').disabled = false;
+//	document.getElementById('connect_button').disabled = false;
+  //      return; // Stop further execution
+    //  }
 
       var payload = messagecontent;
 
@@ -946,8 +950,9 @@ if (selectedRetain === true) {logConsole('[' + getFormattedTimestamp() + ']' + '
 
 if (selectedRetain === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Sending: ' + payload + ' (QoS: ' + message.qos + ', Retain: No)');}
 
-messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
-      document.getElementById('message_input').value = messageId;
+//messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
+ //     document.getElementById('message_input').value = messageId;
+
 
 
 if (checkbox2.checked) {
@@ -957,7 +962,7 @@ if (checkbox2.checked) {
 
 
       send();
-    }, 1000); // Delay of 1000 milliseconds (1 second)
+    }, 5000); // Delay of 1000 milliseconds (1 second)
   }
 
 
@@ -1669,9 +1674,6 @@ if (other_radio.checked) {
 var custompassword = document.getElementById('password_input').value;
 localStorage.setItem('custompassword', custompassword);}
 }
-
-
-
 
 
 
