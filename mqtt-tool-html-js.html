@@ -801,8 +801,25 @@ resubscribe();
       client.subscribe(topic, options);
 
 
+
+
+if (sendhex.checked) {
+ 
+    document.getElementById('message_input').value = '01 06 00 06 00 02 E8 0A';
+
+  }
+else {
+  
 messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
-      document.getElementById('message_input').value = messageId;
+     document.getElementById('message_input').value = messageId;
+}
+
+      
+      
+      
+      
+      
+      
 
 
       document.getElementById('unsubscribe_button').hidden = false;
@@ -848,12 +865,17 @@ document.getElementById('unsubscribe_button').hidden = false;
 
       client.subscribe(topic, options);
 
+ if (sendhex.checked) {
+  logConsole('[' + getFormattedTimestamp() + '] Send/Receive in HEX enabled!');
+  
+    document.getElementById('message_input').value = '01 06 00 06 00 02 E8 0A';
 
-
-
+  }
+else {
+  logConsole('[' + getFormattedTimestamp() + '] Send/Receive in HEX disabled!');
 messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
-      document.getElementById('message_input').value = messageId;
-
+     document.getElementById('message_input').value = messageId;
+}
 
 
       document.getElementById('unsubscribe_button').hidden = false;
@@ -1046,17 +1068,26 @@ document.getElementById('checkbox1_input').disabled = false;
     function onMessageArrived(message) {
         
        if (sendhex.checked) {
+           
+//let receivedPayloadString = "1,6,0,6,0,2,232,10"; // Replace this with the actual received payload
 
-    // Get the received payload as an ArrayBuffer
-    let receivedPayload = message.payloadBytes.buffer;
+// Get the received payload as an array of bytes
+let receivedPayloadBytes = message.payloadBytes;
 
-    // Convert the ArrayBuffer to a Uint8Array
-    let uint8Payload = new Uint8Array(receivedPayload);
+// Convert the array of bytes to a string
+let receivedString = byteArrayToString(receivedPayloadBytes);
 
-    // Convert the Uint8Array to a hexadecimal string
-    let hexString = uint8ArrayToHexString(uint8Payload);
+// Convert the received string to an array of individual byte strings
+let byteStrings = receivedString.split('').map(char => char.charCodeAt(0));
 
-    logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving: ' + uint8Payload + ' (QoS: ' + message.qos + ')');
+// Convert the byte strings to an array of bytes
+let byteArray = byteStrings;
+
+// Convert the array of bytes to a hexadecimal string
+let hexString = bytesToHexString(byteArray);
+
+
+    logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving: ' + hexString + ' (QoS: ' + message.qos + ')');
     
         }
         
@@ -1123,23 +1154,26 @@ else {
 
 
  client.send(message);
+ 
+  if (sendhex.checked) {
+       
+if (selectedRetain === true) {logConsole('[' + getFormattedTimestamp() + ']' + ' Sending: ' + inputHex + ' (QoS: ' + message.qos + ', Retain: Yes)');}
+
+if (selectedRetain === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Sending: ' + inputHex + ' (QoS: ' + message.qos + ', Retain: No)');}
+  }
+else {
 
 if (selectedRetain === true) {logConsole('[' + getFormattedTimestamp() + ']' + ' Sending: ' + payload + ' (QoS: ' + message.qos + ', Retain: Yes)');}
 
 if (selectedRetain === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Sending: ' + payload + ' (QoS: ' + message.qos + ', Retain: No)');}
 
-   if (sendhex.checked) {
-       
-
-  }
-else {
-    
     
 messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
      document.getElementById('message_input').value = messageId;
   
-}
 
+   
+}
 
 
 
@@ -1909,7 +1943,13 @@ function uint8ArrayToHexString(uint8Array) {
     return Array.from(uint8Array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function bytesToHexString(bytes) {
+    return Array.from(bytes, byte => byte.toString(16).toUpperCase().padStart(2, '0')).join('');
+}
 
+function byteArrayToString(byteArray) {
+    return String.fromCharCode.apply(null, byteArray);
+}
 
 
   </script>
