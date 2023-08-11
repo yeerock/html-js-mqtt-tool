@@ -120,14 +120,21 @@
     <option value="2" selected>2 (Exactly once)</option>
     </select>
 
-  <button id="subscribe_button" type="button" onclick="subscribe();" hidden>Subscribe</button> 
+  <button id="subscribe_button" type="button" onclick="subscribe();" hidden>Subscribe</button>
   <button id="unsubscribe_button" type="button" onclick="unsubscribe();" hidden>Unsubscribe</button> 
+  
+  <label>
+<input type="checkbox" name="sendhex_input" id="sendhex_input" onchange="sendhexchanged()" hidden>
+<span for="sendhex_input" id="sendhex_text" hidden>Send/Receive in HEX</span>
+</label> 
+
 
   <br>
   <br>
 
   <label for="message_input" id="message_text" hidden>Message:</label>
   <input type="text" id="message_input" onchange="messageChanged()" hidden>
+  
 
   <label for="sendqos_input" id="sendqos_text" hidden>QoS: </label>
  <select id="sendqos_input" onchange="sendqosChanged()" hidden>
@@ -407,6 +414,7 @@ document.getElementById('hostname_input').disabled = true;
       document.getElementById('lostcount').hidden = false;
     document.getElementById('checkbox1_input').hidden = false;
     document.getElementById('checkbox1_text').hidden = false;
+
 document.getElementById('reset_button').disabled = true;
 document.getElementById('reset_button').hidden = false;
 
@@ -423,7 +431,7 @@ document.getElementById('reset_button').hidden = false;
 stopCountup();
 
 
-       var mosquittoRadio = document.getElementById("mosquitto_radio");
+      var mosquittoRadio = document.getElementById("mosquitto_radio");
       var emqxRadio = document.getElementById("emqx_radio");
       var mqtthqRadio = document.getElementById("mqtthq_radio");
       var otherRadio = document.getElementById("other_radio");
@@ -503,7 +511,7 @@ if (authdropdown.value  ===  'true'){
 
       // Set client options
      options = {
-        onSuccess: connected, // After connected, subscribes
+        onSuccess: reconnected, // After connected, subscribes
         onFailure: onFail,    // Useful for logging / debugging
        	 //useSSL: true
       };
@@ -528,11 +536,11 @@ if (authdropdown.value  ===  'true'){
       client.connect(options);
 
 if (options.useSSL === true) {
- logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (Use SSL' + ', Timeout: ' + options.timeout  + ')');
+ logConsole('[' + getFormattedTimestamp() + '] Reconnecting to ' + ip + ':' + port + ' (Use SSL' + ', Timeout: ' + options.timeout  + ')');
 }
 
 if (options.useSSL === false) {
- logConsole('[' + getFormattedTimestamp() + '] Connecting to ' + ip + ':' + port + ' (No SSL, Timeout: ' + options.timeout  + ')');
+ logConsole('[' + getFormattedTimestamp() + '] Reconnecting to ' + ip + ':' + port + ' (No SSL, Timeout: ' + options.timeout  + ')');
 }
 
 
@@ -574,6 +582,7 @@ document.getElementById('hostname_input').disabled = true;
       document.getElementById('lostcount').hidden = false;
     document.getElementById('checkbox1_input').hidden = false;
     document.getElementById('checkbox1_text').hidden = false;
+      
 
 
 
@@ -607,7 +616,8 @@ document.getElementById('hostname_input').disabled = false; }
 	document.getElementById('timeout_text').disabled = false;
 	document.getElementById('timeout_input').disabled = false;
       document.getElementById('checkbox1_input').disabled = false;
-        document.getElementById('connect_button').disabled = false;
+   
+            document.getElementById('connect_button').disabled = false;
 	document.getElementById('connect_button').innerHTML = 'Connect';
         document.getElementById('disconnect_button').hidden = true;
 
@@ -620,14 +630,19 @@ document.getElementById('hostname_input').disabled = false; }
       document.getElementById('lostcount').hidden = true;
     document.getElementById('checkbox1_input').hidden = true;
     document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('reset_button').hidden = true;
 
 
 
         document.getElementById('topic_text').hidden = true;
+          document.getElementById('sendhex_input').hidden = true;
+    document.getElementById('sendhex_text').hidden = true;
         document.getElementById('topic_input').hidden = true;
         document.getElementById('subscribe_button').hidden = true;
+             
         document.getElementById('unsubscribe_button').hidden = true;
+        
         document.getElementById('message_text').hidden = true;
         document.getElementById('message_input').hidden = true;
         document.getElementById('sendqos_text').hidden = true;
@@ -637,6 +652,7 @@ document.getElementById('reset_button').hidden = true;
         document.getElementById('send_button').hidden = true;
         document.getElementById('checkbox2text').hidden = true;
         document.getElementById('checkbox2').hidden = true;
+   
         document.getElementById('port1_input').disabled = false;
         document.getElementById('port2_input').disabled = false;
         document.getElementById('port3_input').disabled = false;
@@ -682,8 +698,10 @@ document.getElementById('reset_button').hidden = true;
       document.getElementById('disconnect_button').hidden = false;
       document.getElementById('checkbox1_input').disabled = false;
       document.getElementById('checkbox1_text').disabled = false;
+     
     document.getElementById('checkbox1_input').hidden = false;
       document.getElementById('checkbox1_text').hidden = false;
+      
       document.getElementById('connectiontext').hidden = false;
       document.getElementById('failedcounttext').hidden = false;
       document.getElementById('failedcount').hidden = false;
@@ -691,13 +709,67 @@ document.getElementById('reset_button').hidden = true;
       document.getElementById('lostcounttext').hidden = false;
       document.getElementById('lostcount').hidden = false;
       document.getElementById('topic_text').hidden = false;
+        document.getElementById('sendhex_input').hidden = false;
+    document.getElementById('sendhex_text').hidden = false;
       document.getElementById('topic_input').hidden = false;
       document.getElementById('subqos_text').hidden = false;
       document.getElementById('subqos_input').hidden = false;
       document.getElementById('subqos_input').disabled = false;
       document.getElementById('topic_input').disabled = false;
       document.getElementById('subscribe_button').hidden = false;
+         
       document.getElementById('subscribe_button').disabled = false;
+    }  
+
+
+
+
+ function reconnected(context) {
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Reconnected! Client ID: ' + clientId);
+
+
+      document.getElementById('mosquitto_radio').disabled = true;
+      document.getElementById('emqx_radio').disabled = true;
+      document.getElementById('mqtthq_radio').disabled = true;
+      document.getElementById('other_radio').disabled = true;
+
+      document.getElementById('clear_button').disabled = false;
+
+      document.getElementById('hostname_input').disabled = true;
+      document.getElementById('port1_input').disabled = true;
+      document.getElementById('port2_input').disabled = true;
+      document.getElementById('port3_input').disabled = true;
+      document.getElementById('port9_input').disabled = true;
+        document.getElementById('ssl_input').disabled = true;
+     document.getElementById('timeout_text').disabled = true;
+      document.getElementById('timeout_input').disabled = true;
+      document.getElementById('connect_button').hidden = true;
+	document.getElementById('connect_button').innerHTML = 'Connect';
+      document.getElementById('disconnect_button').hidden = false;
+      document.getElementById('checkbox1_input').disabled = false;
+      document.getElementById('checkbox1_text').disabled = false;
+    document.getElementById('checkbox1_input').hidden = false;
+      document.getElementById('checkbox1_text').hidden = false;
+
+
+      document.getElementById('connectiontext').hidden = false;
+      document.getElementById('failedcounttext').hidden = false;
+      document.getElementById('failedcount').hidden = false;
+      document.getElementById('bar').hidden = false;
+      document.getElementById('lostcounttext').hidden = false;
+      document.getElementById('lostcount').hidden = false;
+      document.getElementById('topic_text').hidden = false;
+        document.getElementById('sendhex_input').hidden = false;
+    document.getElementById('sendhex_text').hidden = false;
+      document.getElementById('topic_input').hidden = false;
+      document.getElementById('subqos_text').hidden = false;
+      document.getElementById('subqos_input').hidden = false;
+      document.getElementById('subqos_input').disabled = false;
+      document.getElementById('topic_input').disabled = false;
+      document.getElementById('subscribe_button').hidden = false;
+         
+      document.getElementById('subscribe_button').disabled = false;
+resubscribe();
     }
 
 
@@ -705,7 +777,9 @@ document.getElementById('reset_button').hidden = true;
 
 
 
-    function subscribe(context) {
+
+
+    function resubscribe(context) {
       topic = document.getElementById('topic_input').value;
    document.getElementById('subqos_text').disabled = true;
       document.getElementById('subqos_input').disabled = true;
@@ -715,7 +789,55 @@ document.getElementById('reset_button').hidden = true;
 
   
 
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribing to Topic: ' + topic + '...');
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Resubscribing to Topic: ' + topic + ' ...');
+
+      // And subscribe to our topics -- all with the same callback function
+      options = { qos: 0, onSuccess: function (context) { logConsole('[' + getFormattedTimestamp() + ']' + ' Resubscribed! QoS: ' + options.qos); } }
+
+ var subqosDropdown = document.getElementById("subqos_input");
+       var selectedsubQoS = parseInt(subqosDropdown.value);
+      options.qos = selectedsubQoS;
+
+      client.subscribe(topic, options);
+
+
+messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
+      document.getElementById('message_input').value = messageId;
+
+
+      document.getElementById('unsubscribe_button').hidden = false;
+          
+       document.getElementById('subscribe_button').innerHTML = 'Subscribe';
+document.getElementById('subscribe_button').hidden = true;
+     
+      document.getElementById('topic_input').disabled = true;
+      document.getElementById('message_text').hidden = false;
+      document.getElementById('message_input').hidden = false;
+      document.getElementById('sendqos_text').hidden = false;
+      document.getElementById('sendqos_input').hidden = false;
+      document.getElementById('retain_text').hidden = false;
+      document.getElementById('retain_input').hidden = false;
+      document.getElementById('send_button').hidden = false;
+      document.getElementById('checkbox2text').hidden = false;
+      document.getElementById('checkbox2').hidden = false;
+ 
+document.getElementById('unsubscribe_button').hidden = false;
+
+
+    }
+
+
+   function subscribe(context) {
+      topic = document.getElementById('topic_input').value;
+   document.getElementById('subqos_text').disabled = true;
+      document.getElementById('subqos_input').disabled = true;
+    document.getElementById('subscribe_button').disabled = true;
+            document.getElementById('topic_input').disabled = false;
+       document.getElementById('subscribe_button').innerHTML = 'Subscribing';
+
+  
+
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribing to Topic: ' + topic + ' ...');
 
       // And subscribe to our topics -- all with the same callback function
       options = { qos: 0, onSuccess: function (context) { logConsole('[' + getFormattedTimestamp() + ']' + ' Subscribed! QoS: ' + options.qos); } }
@@ -737,7 +859,7 @@ messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
       document.getElementById('unsubscribe_button').hidden = false;
        document.getElementById('subscribe_button').innerHTML = 'Subscribe';
 document.getElementById('subscribe_button').hidden = true;
-
+     
       document.getElementById('topic_input').disabled = true;
       document.getElementById('message_text').hidden = false;
       document.getElementById('message_input').hidden = false;
@@ -748,18 +870,35 @@ document.getElementById('subscribe_button').hidden = true;
       document.getElementById('send_button').hidden = false;
       document.getElementById('checkbox2text').hidden = false;
       document.getElementById('checkbox2').hidden = false;
+ 
 document.getElementById('unsubscribe_button').hidden = false;
+
+
+
+if (checkbox2.checked) {
+
+
+    setTimeout(function() {
+
+
+      send();
+    }, 1000); // Delay of 1000 milliseconds (1 second)
+  }
 
 
     }
 
 
 
+
+
+
     function unsubscribe(context) {
       topic = document.getElementById('topic_input').value;
-      logConsole('[' + getFormattedTimestamp() + ']' + ' Unsubscribing from Topic: ' + topic + '...');
+      logConsole('[' + getFormattedTimestamp() + ']' + ' Unsubscribing from Topic: ' + topic + ' ...');
 
       document.getElementById('subscribe_button').hidden = false;
+     
       document.getElementById('subscribe_button').disabled = false;
       document.getElementById('unsubscribe_button').hidden = true;
       document.getElementById('topic_input').disabled = false;
@@ -774,6 +913,7 @@ document.getElementById('unsubscribe_button').hidden = false;
       document.getElementById('send_button').hidden = true;
       document.getElementById('checkbox2text').hidden = true;
       document.getElementById('checkbox2').hidden = true;
+      
 
       client.unsubscribe(topic);
       logConsole('[' + getFormattedTimestamp() + ']' + ' Unsubscribed!');
@@ -816,6 +956,7 @@ document.getElementById('reset_button').hidden = false;
       document.getElementById('lostcount').hidden = false;
    document.getElementById('checkbox1_input').hidden = false;
     document.getElementById('checkbox1_text').hidden = false;
+     
 
   failedcount++;
   updatefailedcount();
@@ -856,6 +997,8 @@ document.getElementById('disconnect_button').hidden = true;
    document.getElementById('timeout_text').disabled = false;
       document.getElementById('timeout_input').disabled = false;
 document.getElementById('checkbox1_input').disabled = false;
+
+    
      document.getElementById('connectiontext').hidden = false;
       document.getElementById('failedcounttext').hidden = false;
       document.getElementById('failedcount').hidden = false;
@@ -864,6 +1007,8 @@ document.getElementById('checkbox1_input').disabled = false;
       document.getElementById('lostcount').hidden = false;
 
  document.getElementById('topic_text').hidden = true;
+   document.getElementById('sendhex_input').hidden = true;
+    document.getElementById('sendhex_text').hidden = true;
  document.getElementById('topic_input').hidden = true;
  document.getElementById('subqos_text').hidden = true;
  document.getElementById('subqos_input').hidden = true;
@@ -877,8 +1022,10 @@ document.getElementById('checkbox1_input').disabled = false;
  document.getElementById('send_button').hidden = true;
  document.getElementById('checkbox2').hidden = true;
  document.getElementById('checkbox2text').hidden = true;
+ 
    document.getElementById('checkbox1_input').hidden = false;
     document.getElementById('checkbox1_text').hidden = false;
+     
 
 
   // Increment the message count
@@ -897,20 +1044,36 @@ document.getElementById('checkbox1_input').disabled = false;
 
 
     function onMessageArrived(message) {
+        
+       if (sendhex.checked) {
 
+    // Get the received payload as an ArrayBuffer
+    let receivedPayload = message.payloadBytes.buffer;
+
+    // Convert the ArrayBuffer to a Uint8Array
+    let uint8Payload = new Uint8Array(receivedPayload);
+
+    // Convert the Uint8Array to a hexadecimal string
+    let hexString = uint8ArrayToHexString(uint8Payload);
+
+    logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving: ' + uint8Payload + ' (QoS: ' + message.qos + ')');
+    
+        }
+        
+      else {
   var topicArrived = message.destinationName;
-  var senderArrived = topicArrived.split("/")[0];
+  var senderArrived = topicArrived.split("/")[1];
 
  onMessageArrivedCalled = true;
 
-   if (message.retained === true) {logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving Retained Message: ' + //message.payloadString + ' (Publisher: Client #' + topicArrived + ', QoS: ' + message.qos + ')');}
-message.payloadString + ' (QoS: ' + message.qos + ')');}
+  // if (message.retained === true) {logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving Retained Message: ' + message.payloadString + ' (Publisher: Client #' + senderArrived + ', QoS: ' + message.qos + ')');}
+   if (message.retained === true) {logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving Retained Message: ' + message.payloadString + ' (QoS: ' + message.qos + ')');}
 
-   if (message.retained === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving: ' + //message.payloadString + ' (From: Client #' + topicArrived + ', QoS: ' + message.qos + ')');}
-message.payloadString + ' (QoS: ' + message.qos + ')');}
+//  if (message.retained === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving: ' + message.payloadString + ' (From: Client #' + senderArrived + ', QoS: ' + message.qos + ')');}
+   if (message.retained === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Receiving: ' + message.payloadString + ' (QoS: ' + message.qos + ')');}
 
    
-
+}
 
     }
 
@@ -918,24 +1081,37 @@ message.payloadString + ' (QoS: ' + message.qos + ')');}
 
     function send() {
 
-      var messagecontent = document.getElementById('message_input').value;
+var sendhex = document.getElementById('sendhex_input');
+   if (sendhex.checked) {
+       // Retrieve the hexadecimal input value from the HTML element
+var inputHex = document.getElementById('message_input').value;
+
+// Remove any spaces from the input string
+inputHex = inputHex.replace(/\s/g, '');
+
+// Split the input string into pairs of characters
+var hexPairs = inputHex.match(/.{1,2}/g);
+
+// Convert the hex pairs to byte values
+var hexPayloadBytes = hexPairs.map(pair => parseInt(pair, 16));
+
+// Convert the byte values to a Uint8Array
+var payload = new Uint8Array(hexPayloadBytes);
+
+// Create an MQTT message with the payload
+var message = new Paho.MQTT.Message(payload.buffer);
+  }
+else {
+    var messagecontent = document.getElementById('message_input').value;
+   var payload = messagecontent;
+    message = new Paho.MQTT.Message(payload);
+}
 
 
-
- // if (messagecontent === '') {
-  //      document.getElementById('message_input').placeholder = 'Please enter message!';
-//	document.getElementById('port9_input').disabled = false;
-//   document.getElementById('timeout_text').disabled = false;
-  //    document.getElementById('timeout_input').disabled = false;
-//	document.getElementById('connect_button').disabled = false;
-  //      return; // Stop further execution
-    //  }
-
-      var payload = messagecontent;
 
       // Send message
     
-      message = new Paho.MQTT.Message(payload);
+     
       message.destinationName = topic;
        var sendqosDropdown = document.getElementById("sendqos_input");
        var selectedsendQoS = parseInt(sendqosDropdown.value);
@@ -952,8 +1128,20 @@ if (selectedRetain === true) {logConsole('[' + getFormattedTimestamp() + ']' + '
 
 if (selectedRetain === false) {logConsole('[' + getFormattedTimestamp() + ']' + ' Sending: ' + payload + ' (QoS: ' + message.qos + ', Retain: No)');}
 
+   if (sendhex.checked) {
+       
+
+  }
+else {
+    
+    
 messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
      document.getElementById('message_input').value = messageId;
+  
+}
+
+
+
 
 
 
@@ -964,7 +1152,7 @@ if (checkbox2.checked) {
 
 
       send();
-    }, 5000); // Delay of 1000 milliseconds (1 second)
+    }, 1000); // Delay of 1000 milliseconds (1 second)
   }
 
 
@@ -1075,6 +1263,7 @@ document.getElementById('timeout_text').hidden = false;
 document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('connect_button').hidden = false;
 
           document.getElementById('hostname_input').disabled = true;
@@ -1096,6 +1285,7 @@ document.getElementById('lostcounttext').hidden = true;
 document.getElementById('lostcount').hidden = true;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('reset_button').hidden = true;
 
 
@@ -1140,6 +1330,7 @@ document.getElementById('timeout_text').hidden = false;
 document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('connect_button').hidden = false;
 
           document.getElementById('hostname_input').disabled = true;
@@ -1161,6 +1352,7 @@ document.getElementById('lostcounttext').hidden = true;
 document.getElementById('lostcount').hidden = true;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('reset_button').hidden = true;
 
 
@@ -1209,6 +1401,7 @@ document.getElementById('timeout_text').hidden = false;
 document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+ 
 document.getElementById('connect_button').hidden = false;
 document.getElementById('hostname_input').disabled = true;
 document.getElementById('hostname_input').value = 'public.mqtthq.com';
@@ -1229,6 +1422,7 @@ document.getElementById('lostcounttext').hidden = true;
 document.getElementById('lostcount').hidden = true;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('reset_button').hidden = true;
 
 
@@ -1281,6 +1475,7 @@ document.getElementById('timeout_text').hidden = false;
 document.getElementById('timeout_input').hidden = false;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('connect_button').hidden = false;
 document.getElementById('hostname_input').disabled = false;
 document.getElementById('hostname_input').value = storage.getItem('customhostname');
@@ -1305,6 +1500,7 @@ document.getElementById('lostcounttext').hidden = true;
 document.getElementById('lostcount').hidden = true;
 document.getElementById('checkbox1_input').hidden = true;
 document.getElementById('checkbox1_text').hidden = true;
+
 document.getElementById('reset_button').hidden = true;
 
 
@@ -1427,6 +1623,25 @@ else {
 }
 
 
+
+
+ var sendhex = document.getElementById('sendhex_input');
+
+function sendhexchanged() {
+   if (sendhex.checked) {
+  logConsole('[' + getFormattedTimestamp() + '] Send/Receive in HEX enabled!');
+  
+    document.getElementById('message_input').value = '01 06 00 06 00 02 E8 0A';
+
+
+
+  }
+else {
+  logConsole('[' + getFormattedTimestamp() + '] Send/Receive in HEX disabled!');
+messageId = "Random Message #" + parseInt(Math.random() * 100000, 10);
+     document.getElementById('message_input').value = messageId;
+}
+}
 
 
 
@@ -1676,6 +1891,24 @@ if (other_radio.checked) {
 var custompassword = document.getElementById('password_input').value;
 localStorage.setItem('custompassword', custompassword);}
 }
+
+
+// Convert a string to hexadecimal representation
+function stringToHex(str) {
+    let hex = '';
+    for (let i = 0; i < str.length; i++) {
+        hex += str.charCodeAt(i).toString(16).padStart(2, '0');
+    }
+    return hex;
+}
+
+
+
+// Convert a Uint8Array to a hexadecimal string
+function uint8ArrayToHexString(uint8Array) {
+    return Array.from(uint8Array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
 
 
 
