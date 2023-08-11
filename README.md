@@ -2,6 +2,9 @@
 
 This is a simple HTML and JavaScript MQTT tool that allows you to connect to an MQTT broker, subscribe to a topic, and send messages. It was written by Alex Leong from VYROX IoT.
 
+## Updates
+11-Aug-2023: Added the very important "Send/Receive in HEX".
+
 ## Usage
 
 1. Open the HTML file in a web browser.
